@@ -1,0 +1,32 @@
+# Tutorial for Open-MMLab
+### 教程网址
+1. MMDetection: https://mmdetection.readthedocs.io/zh_CN/latest/
+2. MMTracking: https://mmtracking.readthedocs.io/zh_CN/latest/
+
+### 训练自己的 VID 模型
+
+1. 自定义数据集
+https://mmtracking.readthedocs.io/zh_CN/latest/tutorials/customize_dataset.html
+
+2. 自定义 VID 模型
+https://mmtracking.readthedocs.io/zh_CN/latest/tutorials/customize_vid_model.html
+e.g.
+https://mmtracking.readthedocs.io/zh_CN/latest/tutorials/config_vid.html
+
+3. 准备配置文件
+https://mmtracking.readthedocs.io/zh_CN/latest/tutorials/config.html
+
+4. 训练新模型
+单GPU
+`python tools/train.py ${CONFIG_FILE} [optional arguments]`
+e.g.
+`CUDA_VISIBLE_DEVICES=6 PORT=29501 python tools/train.py ./configs/vid/dff/dff_faster_rcnn_r50_dc5_1x_imagenetvid_zzh.py --work-dir ./output/test/`
+
+多GPU
+`python tools/train.py ${NEW_CONFIG_FILE}`
+e.g.
+`CUDA_VISIBLE_DEVICES=6,7 PORT=29501 ./tools/dist_train.sh ./configs/vid/dff/dff_faster_rcnn_r50_dc5_1x_imagenetvid_zzh.py 2 --work-dir ./output/test/`
+
+5. 测试和推理
+`python tools/test.py ${NEW_CONFIG_FILE} ${TRAINED_MODEL} --eval bbox track`
+
