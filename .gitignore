@@ -1,3 +1,13 @@
+# zzh
+*.mp4
+results/
+result/
+bak/
+*.pth
+data/
+output/
+model_zoo/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -5,6 +15,7 @@ __pycache__/
 
 # C extensions
 *.so
+
 
 # Distribution / packaging
 .Python
