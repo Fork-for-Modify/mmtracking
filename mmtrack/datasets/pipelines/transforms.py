@@ -1,4 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from ast import Raise
 import math
 
 import cv2
@@ -786,6 +787,68 @@ class SeqPad(Pad):
             outs.append(_results)
         return outs
 
+
+@PIPELINES.register_module()
+class SeqCvtColor:
+    """Convert image to assigned color space.
+    Args:
+        src_color: source color (str): bgr, rgb, gray
+        dst_color: dstination color (str): bgr, rgb, gray
+
+    ToDo: support for more color: raw-bggr, raw-rggb
+    By: Zhihong Zhang
+    """
+
+    def __init__(self, src_color, dst_color):
+        self.src_color = src_color
+        self.dst_color = dst_color
+
+    def _cvt_color(self, result, src_color, dst_color):
+        """convert image color from src_color to dst_color (based on cv2) """
+        for key in result.get('img_fields', ['img']):
+            if src_color == 'bgr' and dst_color == 'gray':
+                assert len(
+                    result[key].shape) == 3 and result[key].shape[-1] == 3, 'H*W*3 image is required'
+                result[key] = cv2.cvtColor(result[key], cv2.COLOR_BGR2GRAY)
+            elif src_color == 'rgb' and dst_color == 'gray':
+                assert len(
+                    result[key].shape) == 3 and result[key].shape[-1] == 3, 'H*W*3 image is required'
+                result[key] = cv2.cvtColor(result[key], cv2.COLOR_RGB2GRAY)
+            elif src_color == 'bgr' and dst_color == 'rgb':
+                assert len(
+                    result[key].shape) == 3 and result[key].shape[-1] == 3, 'H*W*3 image is required'
+                result[key] = cv2.cvtColor(result[key], cv2.COLOR_BGR2RGB)
+            elif src_color == 'rgb' and dst_color == 'bgr':
+                assert len(
+                    result[key].shape) == 3 and result[key].shape[-1] == 3, 'H*W*3 image is required'
+                result[key] = cv2.cvtColor(result[key], cv2.COLOR_RGB2BGR)
+
+            else:
+                raise NotImplementedError
+
+            # update meta data: img_shape
+            result['img_shape'] = result[key].shape
+
+    def __call__(self, results):
+        """Call function.
+
+        For each dict in results, call the call function of `Pad` to pad image.
+
+        Args:
+            results (list[dict]): List of dict that from
+                :obj:`mmtrack.CocoVideoDataset`.
+
+        Returns:
+            list[dict]: List of dict that contains padding results,
+            'pad_shape', 'pad_fixed_size' and 'pad_size_divisor' keys are
+            added into the dict.
+        """
+        outs = []
+        for _results in results:
+            self._cvt_color(
+                _results, self.src_color, self.dst_color)
+            outs.append(_results)
+        return outs
 
 @PIPELINES.register_module()
 class SeqRandomCrop(object):

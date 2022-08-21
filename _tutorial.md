@@ -3,6 +3,9 @@
 1. MMDetection: https://mmdetection.readthedocs.io/zh_CN/latest/
 2. MMTracking: https://mmtracking.readthedocs.io/zh_CN/latest/
 
+### 训练已有的 VID 模型
+1. 数据集转换为CocoVID格式：https://github.com/open-mmlab/mmtracking/tree/master/tools/convert_datasets/
+
 ### 训练自己的 VID 模型
 
 1. 自定义数据集
@@ -20,13 +23,15 @@ https://mmtracking.readthedocs.io/zh_CN/latest/tutorials/config.html
 单GPU
 `python tools/train.py ${CONFIG_FILE} [optional arguments]`
 e.g.
-`CUDA_VISIBLE_DEVICES=6 PORT=29501 python tools/train.py ./configs/vid/dff/dff_faster_rcnn_r50_dc5_1x_imagenetvid_zzh.py --work-dir ./output/test/`
+`CUDA_VISIBLE_DEVICES=6 PORT=29501 python tools/train.py ./configs/vid/selsa/selsa_faster_rcnn_r50_dc5_1x_imagenetvid_zzh.py --work-dir ./output/test/ `
+
+`CUDA_VISIBLE_DEVICES=0 PORT=29501 python tools/train.py ./configs/vid/scidet/sci_fcos_faster_rcnn_r50_dc5_1x_imagenetvid.py --work-dir ./output/test/ `
 
 多GPU
 `python tools/train.py ${NEW_CONFIG_FILE}`
 e.g.
-`CUDA_VISIBLE_DEVICES=6,7 PORT=29501 ./tools/dist_train.sh ./configs/vid/dff/dff_faster_rcnn_r50_dc5_1x_imagenetvid_zzh.py 2 --work-dir ./output/test/`
+`CUDA_VISIBLE_DEVICES=6,7 PORT=29501 ./tools/dist_train.sh ./configs/vid/dff/dff_faster_rcnn_r50_dc5_1x_imagenetvid_zzh.py 2 --work-dir ./output/test/ `
 
 5. 测试和推理
-`python tools/test.py ${NEW_CONFIG_FILE} ${TRAINED_MODEL} --eval bbox track`
+`python tools/test.py ${NEW_CONFIG_FILE} ${TRAINED_MODEL} --eval bbox track `
 

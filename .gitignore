@@ -118,7 +118,6 @@ venv.bak/
 
 data
 ckpts
-.vscode
 .idea
 .DS_Store
 
