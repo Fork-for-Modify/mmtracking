@@ -20,12 +20,14 @@ class SCIEncoding(object):
         fixed_mask (bool): If True, use loaded fixed masks; if false, use randomly generated masks. Defaults to True.
         mask_path (str): mask path for using fixed mask
         mask_shape (H*W*Cr): mask shape
+        norm2one (bool): normalize original frames to one before encoding (/255)
 
     """
 
-    def __init__(self, fixed_mask=True, mask_path=None):
+    def __init__(self, fixed_mask=True, mask_path=None, norm2one=True):
         super(SCIEncoding, self).__init__()
         self.fixed_mask = fixed_mask
+        self.norm2one = norm2one
         if self.fixed_mask:
             # load mask from .npy file
             self.sci_mask = np.load(mask_path)
@@ -46,7 +48,9 @@ class SCIEncoding(object):
         # calc coded measurement
         coded_meas = np.zeros_like(sci_mask[..., 0])
         for i, _results in enumerate(results):
-            coded_meas += _results['img'].astype(np.float32)*sci_mask[..., i]
+            if self.norm2one:
+               _results['img'] = _results['img'].astype(np.float32)/255
+            coded_meas += _results['img']*sci_mask[..., i]
 
         # debug
         cv2.imwrite('./_debug_img.png', np.uint8(results[0]['img']))

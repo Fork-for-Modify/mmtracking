@@ -1,6 +1,7 @@
 # Tutorial for Open-MMLab
 ### 教程网址
 1. MMDetection: https://mmdetection.readthedocs.io/zh_CN/latest/
+    - 配置文件的详细介绍 https://mmdetection.readthedocs.io/zh_CN/latest/tutorials/config.html?highlight=norm_cfg
 2. MMTracking: https://mmtracking.readthedocs.io/zh_CN/latest/
 
 ### 训练已有的 VID 模型

@@ -28,9 +28,11 @@ class SCIDataCollect(object):
                  default_meta_keys=('filename', 'ori_filename', 'ori_shape',
                                     'img_shape', 'pad_shape', 'scale_factor',
                                     'flip', 'flip_direction', 'img_norm_cfg',
-                                    'frame_id', 'is_video_data')):
+                                    'frame_id', 'is_video_data'),
+                 default_meta_key_values = None):
         self.keys = keys
         self.meta_keys = default_meta_keys
+        self.default_meta_key_values = default_meta_key_values
         if meta_keys is not None:
             if isinstance(meta_keys, str):
                 meta_keys = (meta_keys, )
@@ -61,7 +63,8 @@ class SCIDataCollect(object):
             results, dict), '$frames in SCIEncoding results should be a list of dict'
         outs = []
         for _results in results:
-            _results = self._add_default_meta_keys(_results)
+            _results = self._add_default_meta_keys(
+                _results, default_meta_key_values=self.default_meta_key_values)
             _results = self._collect_meta_keys(_results)
             outs.append(_results)
 
@@ -82,7 +85,7 @@ class SCIDataCollect(object):
             data[key] = results[key]
         return data
 
-    def _add_default_meta_keys(self, results):
+    def _add_default_meta_keys(self, results, default_meta_key_values=None):
         """Add default meta keys.
 
         We set default meta keys including `pad_shape`, `scale_factor` and
@@ -91,20 +94,22 @@ class SCIDataCollect(object):
 
         Args:
             results (dict): Result dict contains the data to convert.
+            default_meta_values: default values for default_meta_keys
 
         Returns:
             results (dict): Updated result dict contains the data to convert.
         """
         img = results['img']
-        results.setdefault('pad_shape', img.shape)
-        results.setdefault('scale_factor', 1.0)
-        num_channels = 1 if len(img.shape) < 3 else img.shape[2]
         results.setdefault(
-            'img_norm_cfg',
+            'pad_shape', default_meta_key_values.get('pad_shape', img.shape))
+        results.setdefault(
+            'scale_factor', default_meta_key_values.get('scale_factor', 1.0))
+        num_channels = 1 if len(img.shape) < 3 else img.shape[2]
+        results.setdefault('img_norm_cfg', default_meta_key_values.get('img_norm_cfg',
             dict(
                 mean=np.zeros(num_channels, dtype=np.float32),
                 std=np.ones(num_channels, dtype=np.float32),
-                to_rgb=False))
+                to_rgb=False)))
         return results
 
 
@@ -295,11 +300,14 @@ class SCIFormatBundle(object):
         else:
             raise KeyError('Missing `sci_mask` in `sci_results`')
         
+        # format `coded_meas` to C*H*W
+        coded_meas = to_tensor(np.transpose(
+            sci_results['coded_meas'], (2, 0, 1)))
+
         # collect formatted results
         sci_results['frames'] = frames
         sci_results['sci_mask'] = DC(to_tensor(sci_mask), stack=True)
-        sci_results['coded_meas'] = DC(
-            to_tensor(sci_results['coded_meas']), stack=True)
+        sci_results['coded_meas'] = DC(coded_meas, stack=True)
 
         return sci_results
 

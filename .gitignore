@@ -1,5 +1,6 @@
 # zzh
 *.mp4
+*.mat
 results/
 result/
 bak/
