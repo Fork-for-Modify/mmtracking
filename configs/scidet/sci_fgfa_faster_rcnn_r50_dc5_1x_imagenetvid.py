@@ -1,8 +1,8 @@
 # zzh: NotImp
 _base_ = [
-    '../../_base_/models/faster_rcnn_r50_dc5.py',
-    '../../_base_/datasets/uadetrac_vid_scidet_style.py',
-    '../../_base_/default_runtime.py'
+    '../_base_/models/faster_rcnn_r50_dc5.py',
+    '../_base_/datasets/uadetrac_scidet_style.py',
+    '../_base_/default_runtime.py'
 ]
 
 #-------------------

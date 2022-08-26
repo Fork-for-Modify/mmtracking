@@ -5,12 +5,12 @@ import torch
 from addict import Dict
 from mmdet.models import build_detector
 
-from ..builder import MODELS
+from ..builder import MODELS, build_scidecoder
 from .sci_base import BaseSCIDetector
 
 
 @MODELS.register_module()
-class SCI_FCOS(BaseSCIDetector):
+class SCIFCOS(BaseSCIDetector):
     """SCI + FCOS (A Simple and Strong Anchor-Free Object Detector)
 
     This video object detector is the implementation of `SELSA
@@ -19,12 +19,13 @@ class SCI_FCOS(BaseSCIDetector):
 
     def __init__(self,
                  detector,
+                 scidecoder=None,
                  pretrains=None,
                  init_cfg=None,
                  frozen_modules=None,
                  train_cfg=None,
                  test_cfg=None):
-        super(SCI_FCOS, self).__init__(init_cfg)
+        super(SCIFCOS, self).__init__(init_cfg)
         if isinstance(pretrains, dict):
             warnings.warn('DeprecationWarning: pretrains is deprecated, '
                           'please use "init_cfg" instead')
@@ -35,8 +36,8 @@ class SCI_FCOS(BaseSCIDetector):
             else:
                 detector.init_cfg = None
         self.detector = build_detector(detector)
-        assert hasattr(self.detector, 'roi_head'), \
-            'selsa video detector only supports two stage detector'
+        if scidecoder:
+            self.scidecoder = build_scidecoder(scidecoder)
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
 
@@ -63,29 +64,6 @@ class SCI_FCOS(BaseSCIDetector):
 
             gt_labels (list[Tensor]): class indices corresponding to each box.
 
-            ref_img (Tensor): of shape (N, 2, C, H, W) encoding input images.
-                Typically these should be mean centered and std scaled.
-                2 denotes there is two reference images for each input image.
-
-            ref_img_metas (list[list[dict]]): The first list only has one
-                element. The second list contains reference image information
-                dict where each dict has: 'img_shape', 'scale_factor', 'flip',
-                and may also contain 'filename', 'ori_shape', 'pad_shape', and
-                'img_norm_cfg'. For details on the values of these keys see
-                `mmtrack/datasets/pipelines/formatting.py:VideoCollect`.
-
-            ref_gt_bboxes (list[Tensor]): The list only has one Tensor. The
-                Tensor contains ground truth bboxes for each reference image
-                with shape (num_all_ref_gts, 5) in
-                [ref_img_id, tl_x, tl_y, br_x, br_y] format. The ref_img_id
-                start from 0, and denotes the id of reference image for each
-                key image.
-
-            ref_gt_labels (list[Tensor]): The list only has one Tensor. The
-                Tensor contains class indices corresponding to each reference
-                box with shape (num_all_ref_gts, 2) in
-                [ref_img_id, class_indice].
-
             gt_instance_ids (None | list[Tensor]): specify the instance id for
                 each ground truth bbox.
 
@@ -97,20 +75,6 @@ class SCI_FCOS(BaseSCIDetector):
 
             proposals (None | Tensor) : override rpn proposals with custom
                 proposals. Use when `with_rpn` is False.
-
-            ref_gt_instance_ids (None | list[Tensor]): specify the instance id
-                for each ground truth bboxes of reference images.
-
-            ref_gt_bboxes_ignore (None | list[Tensor]): specify which bounding
-                boxes of reference images can be ignored when computing the
-                loss.
-
-            ref_gt_masks (None | Tensor) : True segmentation masks for each
-                box of reference image used if the architecture supports a
-                segmentation task.
-
-            ref_proposals (None | Tensor) : override rpn proposals with custom
-                proposals of reference images. Use when `with_rpn` is False.
 
         Returns:
             dict[str, Tensor]: a dictionary of loss components
@@ -126,21 +90,19 @@ class SCI_FCOS(BaseSCIDetector):
         gt_masks = None
         proposals = None
 
-        ref_img = None
-        ref_img_metas = None
-        ref_gt_bboxes = None
-        ref_gt_labels = None
-        ref_gt_instance_ids = None
-        ref_gt_bboxes_ignore = None
-        ref_gt_masks = None
-        ref_proposals = None
-
         ##  ---------------------------------------
-
+        # augments arrange
         assert len(img) == 1, \
-            'selsa video detector only supports 1 batch size per gpu for now.'
+            'sci detection only supports 1 batch size per gpu for now.'
+        all_imgs = img[0]
+        sci_mask = sci_mask[0]
+        coded_meas = coded_meas[0]
+        ##  ---------------------------------------
+        all_scidec, meas_re = self.scidecoder(coded_meas, sci_mask)
+        ref_img = meas_re  # use the normalized measurement as the ref image
 
-        all_imgs = torch.cat((img, ref_img[0]), dim=0)
+        # zzh: I'm here
+        # all_imgs = torch.cat((img, ref_img[0]), dim=0)
         all_x = self.detector.extract_feat(all_imgs)
         x = []
         ref_x = []
@@ -176,7 +138,7 @@ class SCI_FCOS(BaseSCIDetector):
 
         return losses
 
-    def extract_feats(self, frames, sci_mask, coded_meas):
+    def extract_feats(self, frames, sci_mask=None, coded_meas=None):
         """
         Args:
         sci_mask: sci encoding masks
@@ -310,7 +272,17 @@ class SCI_FCOS(BaseSCIDetector):
         ref_img = None
         ref_img_metas = None
         # --------------------------
+        # augments arrange
+        assert len(img) == 1, \
+            'sci detection only supports 1 batch size per gpu for now.'
+        all_imgs = img[0]
+        sci_mask = sci_mask[0]
+        coded_meas = coded_meas[0]
+        # --------------------------
 
+        all_scidec, meas_re = self.scidecoder(coded_meas, sci_mask)
+
+        #zzh: im here
         if ref_img is not None:
             ref_img = ref_img[0]
         if ref_img_metas is not None:

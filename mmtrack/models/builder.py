@@ -7,7 +7,7 @@ TRACKERS = MODELS
 MOTION = MODELS
 REID = MODELS
 AGGREGATORS = MODELS
-
+SCIDECODERS = MODELS
 
 def build_tracker(cfg):
     """Build tracker."""
@@ -28,6 +28,9 @@ def build_aggregator(cfg):
     """Build aggregator model."""
     return AGGREGATORS.build(cfg)
 
+def build_scidecoder(cfg):
+    """Build SCI decoder."""
+    return SCIDECODERS.build(cfg)
 
 def build_model(cfg, train_cfg=None, test_cfg=None):
     """Build model."""

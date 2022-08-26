@@ -14,7 +14,8 @@ from .track_heads import *  # noqa: F401,F403
 from .trackers import *  # noqa: F401,F403
 from .vid import *  # noqa: F401,F403
 from .vis import *  # noqa: F401,F403
-
+from .sci_decoder import *  # noqa: F401,F403
+from .sci_det import *  # noqa: F401,F403
 __all__ = [
     'AGGREGATORS', 'MODELS', 'TRACKERS', 'MOTION', 'REID', 'build_model',
     'build_tracker', 'build_motion', 'build_aggregator', 'build_reid'

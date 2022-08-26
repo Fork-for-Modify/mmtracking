@@ -1,3 +1,4 @@
+# zzh: NotImp
 # _base_ = [
 #     '../_base_/datasets/coco_detection.py',
 #     '../_base_/schedules/schedule_1x.py', '../_base_/default_runtime.py'
@@ -6,7 +7,11 @@ _base_ = [
     '../../_base_/datasets/uadetrac_vid_scidet_style.py',
     '../../_base_/default_runtime.py'
 ]
-model = dict(
+
+#-------------------
+# model setting
+#-------------------
+detector = dict(
     type='ATSS',
     backbone=dict(
         type='ResNet',
@@ -62,6 +67,10 @@ model = dict(
         score_thr=0.05,
         nms=dict(type='nms', iou_threshold=0.6),
         max_per_img=100))
+
+model = dict(
+    type='SCIATSS',
+    detector=detector)
 
 #-------------------
 # optimizer settings

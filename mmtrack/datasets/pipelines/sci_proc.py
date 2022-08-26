@@ -53,9 +53,9 @@ class SCIEncoding(object):
             coded_meas += _results['img']*sci_mask[..., i]
 
         # debug
-        cv2.imwrite('./_debug_img.png', np.uint8(results[0]['img']))
-        cv2.imwrite('./_debug_mask.png',
-                    np.uint8(255*sci_mask[..., 0]))
-        cv2.imwrite('./_debug_meas.png', np.uint8(coded_meas/10))
+        # cv2.imwrite('./_debug_img.png', np.uint8(results[0]['img']))
+        # cv2.imwrite('./_debug_mask.png',
+        #             np.uint8(255*sci_mask[..., 0]))
+        # cv2.imwrite('./_debug_meas.png', np.uint8(coded_meas/10))
 
         return {'frames': results, 'sci_mask': sci_mask, 'coded_meas': coded_meas}

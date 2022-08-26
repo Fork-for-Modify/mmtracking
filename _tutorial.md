@@ -31,7 +31,12 @@ e.g.
 多GPU
 `python tools/train.py ${NEW_CONFIG_FILE}`
 e.g.
-`CUDA_VISIBLE_DEVICES=6,7 PORT=29501 ./tools/dist_train.sh ./configs/vid/dff/dff_faster_rcnn_r50_dc5_1x_imagenetvid_zzh.py 2 --work-dir ./output/test/ `
+`CUDA_VISIBLE_DEVICES=6,7 PORT=29501 ./tools/dist_train.sh ./configs/vid/dff/dff_faster_rcnn_r50_dc5_1x_imagenetvid_zzh.py 2 --work-dir ./output/train/ `
+
+常用配置
+ - SCIFCOS: ./configs/scidet/sci_fcos_uadetracsci.py
+ - SCISELSA: ./configs/scidet/sci_troi_uadetracsci.py
+ - temporal ROI: ./configs/vid/temporal_roi_align/selsa_troialign_faster_rcnn_r50_dc5_7e_imagenetvid_zzh.py
 
 5. 测试和推理
 `python tools/test.py ${NEW_CONFIG_FILE} ${TRAINED_MODEL} --eval bbox track `

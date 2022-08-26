@@ -100,6 +100,8 @@ class SCIDataCollect(object):
             results (dict): Updated result dict contains the data to convert.
         """
         img = results['img']
+        if default_meta_key_values is None:
+            default_meta_key_values = {}
         results.setdefault(
             'pad_shape', default_meta_key_values.get('pad_shape', img.shape))
         results.setdefault(
@@ -153,6 +155,7 @@ class SCIDataArrange(object):
                 if key not in result:
                     continue
                 value = result[key]
+                #--- orig
                 if value.ndim == 1:
                     value = value[:, None]
                 N = value.shape[0]
@@ -163,6 +166,12 @@ class SCIDataArrange(object):
                     result[key] = value
                 else:
                     out[key] = np.concatenate((out[key], value), axis=0)
+                #--- sci
+                # if i == 0:
+                #     result[key] = [value]
+                # else:
+                #     out[key].append(value)
+                #--- end
             if 'gt_semantic_seg' in result:
                 if i == 0:
                     result['gt_semantic_seg'] = result['gt_semantic_seg'][...,

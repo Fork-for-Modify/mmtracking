@@ -46,6 +46,7 @@ class SelsaRoIHead(StandardRoIHead):
             if gt_bboxes_ignore is None:
                 gt_bboxes_ignore = [None for _ in range(num_imgs)]
             sampling_results = []
+            
             for i in range(num_imgs):
                 assign_result = self.bbox_assigner.assign(
                     proposal_list[i], gt_bboxes[i], gt_bboxes_ignore[i],

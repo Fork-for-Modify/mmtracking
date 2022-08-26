@@ -5,12 +5,12 @@ import torch
 from addict import Dict
 from mmdet.models import build_detector
 
-from ..builder import MODELS
-from .base import BaseVideoDetector
+from ..builder import MODELS, build_scidecoder
+from .sci_base import BaseSCIDetector
 
 
 @MODELS.register_module()
-class SELSA(BaseVideoDetector):
+class SCISELSA(BaseSCIDetector):
     """Sequence Level Semantics Aggregation for Video Object Detection.
 
     This video object detector is the implementation of `SELSA
@@ -19,12 +19,13 @@ class SELSA(BaseVideoDetector):
 
     def __init__(self,
                  detector,
+                 scidecoder=None,
                  pretrains=None,
                  init_cfg=None,
                  frozen_modules=None,
                  train_cfg=None,
                  test_cfg=None):
-        super(SELSA, self).__init__(init_cfg)
+        super(SCISELSA, self).__init__(init_cfg)
         if isinstance(pretrains, dict):
             warnings.warn('DeprecationWarning: pretrains is deprecated, '
                           'please use "init_cfg" instead')
@@ -35,6 +36,8 @@ class SELSA(BaseVideoDetector):
             else:
                 detector.init_cfg = None
         self.detector = build_detector(detector)
+        if scidecoder:
+            self.scidecoder = build_scidecoder(scidecoder)
         assert hasattr(self.detector, 'roi_head'), \
             'selsa video detector only supports two stage detector'
         self.train_cfg = train_cfg
@@ -43,26 +46,22 @@ class SELSA(BaseVideoDetector):
         if frozen_modules is not None:
             self.freeze_module(frozen_modules)
 
-    def forward_train(self,
-                      img,
-                      img_metas,
-                      gt_bboxes,
-                      gt_labels,
-                      ref_img,
-                      ref_img_metas,
-                      ref_gt_bboxes,
-                      ref_gt_labels,
-                      gt_instance_ids=None,
-                      gt_bboxes_ignore=None,
-                      gt_masks=None,
-                      proposals=None,
-                      ref_gt_instance_ids=None,
-                      ref_gt_bboxes_ignore=None,
-                      ref_gt_masks=None,
-                      ref_proposals=None,
-                      **kwargs):
+    def _data_debundle(self, data):
+        """
+        rearange bundled data
+        split data into separate lists according to their first column item (frame index)
+        return [lists]
+        """
+        index = data[:, 0]
+        data = [data[index == i][:,1:] for i in index.unique()]
+        return data
+
+    def forward_train(self, frames, sci_mask, coded_meas, **kwargs):
         """
         Args:
+        sci_mask: sci encoding masks
+        coded_meas: coded measurements
+        frames: original annotated video frames contain the following keys:
             img (Tensor): of shape (N, C, H, W) encoding input images.
                 Typically these should be mean centered and std scaled.
 
@@ -77,29 +76,6 @@ class SELSA(BaseVideoDetector):
 
             gt_labels (list[Tensor]): class indices corresponding to each box.
 
-            ref_img (Tensor): of shape (N, 2, C, H, W) encoding input images.
-                Typically these should be mean centered and std scaled.
-                2 denotes there is two reference images for each input image.
-
-            ref_img_metas (list[list[dict]]): The first list only has one
-                element. The second list contains reference image information
-                dict where each dict has: 'img_shape', 'scale_factor', 'flip',
-                and may also contain 'filename', 'ori_shape', 'pad_shape', and
-                'img_norm_cfg'. For details on the values of these keys see
-                `mmtrack/datasets/pipelines/formatting.py:VideoCollect`.
-
-            ref_gt_bboxes (list[Tensor]): The list only has one Tensor. The
-                Tensor contains ground truth bboxes for each reference image
-                with shape (num_all_ref_gts, 5) in
-                [ref_img_id, tl_x, tl_y, br_x, br_y] format. The ref_img_id
-                start from 0, and denotes the id of reference image for each
-                key image.
-
-            ref_gt_labels (list[Tensor]): The list only has one Tensor. The
-                Tensor contains class indices corresponding to each reference
-                box with shape (num_all_ref_gts, 2) in
-                [ref_img_id, class_indice].
-
             gt_instance_ids (None | list[Tensor]): specify the instance id for
                 each ground truth bbox.
 
@@ -111,34 +87,57 @@ class SELSA(BaseVideoDetector):
 
             proposals (None | Tensor) : override rpn proposals with custom
                 proposals. Use when `with_rpn` is False.
-
-            ref_gt_instance_ids (None | list[Tensor]): specify the instance id
-                for each ground truth bboxes of reference images.
-
-            ref_gt_bboxes_ignore (None | list[Tensor]): specify which bounding
-                boxes of reference images can be ignored when computing the
-                loss.
-
-            ref_gt_masks (None | Tensor) : True segmentation masks for each
-                box of reference image used if the architecture supports a
-                segmentation task.
-
-            ref_proposals (None | Tensor) : override rpn proposals with custom
-                proposals of reference images. Use when `with_rpn` is False.
+            ref_img_metas (list[list[dict]]): The first list only has one
+                element. The second list contains reference image information
+                dict where each dict has: 'img_shape', 'scale_factor', 'flip',
+                and may also contain 'filename', 'ori_shape', 'pad_shape', and
+                'img_norm_cfg'. For details on the values of these keys see
+                `mmtrack/datasets/pipelines/formatting.py:VideoCollect`.
 
         Returns:
             dict[str, Tensor]: a dictionary of loss components
         """
-        assert len(img) == 1, \
-            'selsa video detector only supports 1 batch size per gpu for now.'
 
-        all_imgs = torch.cat((img, ref_img[0]), dim=0)
+        # ---------------------------------------
+        # augments arrange
+        assert len(coded_meas) == 1, \
+            'sci detection only supports 1 batch size per gpu for now.'
+        sci_mask = sci_mask[0]
+        coded_meas = coded_meas[0]
+        # ---------------------------------------
+
+        # sci decoder
+        all_scidec, meas_re = self.scidecoder(coded_meas, sci_mask)
+        ref_img = meas_re  # use the normalized measurement as the ref image
+
+        # ---------------------------------------
+        # data assign
+        img = all_scidec  # img: (N,C,H,W)
+        img_metas = frames['img_metas'][0]
+        gt_bboxes = self._data_debundle(frames['gt_bboxes'][0])
+        gt_labels = self._data_debundle(frames['gt_labels'][0])
+        gt_labels = [_label.squeeze(1).long() for _label in gt_labels]
+        gt_bboxes_ignore = None
+        gt_masks = None,
+        proposals = None
+        ref_proposals = None
+        # use meas_re as ref img
+        if meas_re is not None:
+            ref_img = meas_re.unsqueeze(0)  # ref_img: (1,N,C,H,W)
+            ref_img_metas = frames['img_metas'][0][0].copy()
+            ref_img_metas['filename'] = ''
+            _name_split = ref_img_metas['ori_filename'].split('/')
+            ref_img_metas['ori_filename'] = 'meas_'+'-'.join(_name_split)
+            ref_img_metas = [ref_img_metas]
+        # ---------------------------------------
+
+        all_imgs = torch.cat((img, ref_img), dim=0)
         all_x = self.detector.extract_feat(all_imgs)
         x = []
         ref_x = []
         for i in range(len(all_x)):  # split key feature and ref feature
-            x.append(all_x[i][[0]])
-            ref_x.append(all_x[i][1:])
+            x.append(all_x[i][0:10])
+            ref_x.append(all_x[i][[10]])
 
         losses = dict()
 
@@ -156,7 +155,7 @@ class SELSA(BaseVideoDetector):
             losses.update(rpn_losses)
 
             ref_proposals_list = self.detector.rpn_head.simple_test_rpn(
-                ref_x, ref_img_metas[0])
+                ref_x, ref_img_metas)
         else:
             proposal_list = proposals
             ref_proposals_list = ref_proposals
@@ -258,17 +257,16 @@ class SELSA(BaseVideoDetector):
 
         return x, img_metas, ref_x, ref_img_metas
 
-    def simple_test(self,
-                    img,
-                    img_metas,
-                    ref_img=None,
-                    ref_img_metas=None,
+    def simple_test(self, frames, sci_mask, coded_meas,
                     proposals=None,
                     ref_proposals=None,
                     rescale=False):
         """Test without augmentation.
 
         Args:
+        sci_mask: sci encoding masks
+        coded_meas: coded measurements
+        frames: original annotated video frames contain the following keys:
             img (Tensor): of shape (1, C, H, W) encoding input image.
                 Typically these should be mean centered and std scaled.
 
@@ -278,35 +276,38 @@ class SELSA(BaseVideoDetector):
                 'img_norm_cfg'. For details on the values of these keys see
                 `mmtrack/datasets/pipelines/formatting.py:VideoCollect`.
 
-            ref_img (list[Tensor] | None): The list only contains one Tensor
-                of shape (1, N, C, H, W) encoding input reference images.
-                Typically these should be mean centered and std scaled. N
-                denotes the number for reference images. There may be no
-                reference images in some cases.
-
-            ref_img_metas (list[list[list[dict]]] | None): The first and
-                second list only has one element. The third list contains
-                image information dict where each dict has: 'img_shape',
-                'scale_factor', 'flip', and may also contain 'filename',
-                'ori_shape', 'pad_shape', and 'img_norm_cfg'. For details on
-                the values of these keys see
-                `mmtrack/datasets/pipelines/formatting.py:VideoCollect`. There
-                may be no reference images in some cases.
-
-            proposals (None | Tensor): Override rpn proposals with custom
+        proposals (None | Tensor): Override rpn proposals with custom
                 proposals. Use when `with_rpn` is False. Defaults to None.
 
-            rescale (bool): If False, then returned bboxes and masks will fit
+        rescale (bool): If False, then returned bboxes and masks will fit
                 the scale of img, otherwise, returned bboxes and masks
                 will fit the scale of original image shape. Defaults to False.
 
         Returns:
             dict[str : list(ndarray)]: The detection results.
         """
-        if ref_img is not None:
-            ref_img = ref_img[0]
-        if ref_img_metas is not None:
-            ref_img_metas = ref_img_metas[0]
+
+        # --------------------------
+        # augments arrange
+        assert len(coded_meas) == 1, \
+            'sci detection only supports 1 batch size per gpu for now.'
+        sci_mask = sci_mask[0]
+        coded_meas = coded_meas[0]
+        # --------------------------
+
+        all_scidec, meas_re = self.scidecoder(coded_meas, sci_mask)
+
+        img = all_scidec  # img: (N,C,H,W)
+        img_metas = frames['img_metas'][0]
+        # use meas_re as ref img
+        if meas_re is not None:
+            ref_img = meas_re.unsqueeze(0)  # ref_img: (1,N,C,H,W)
+            ref_img_metas = frames['img_metas'][0][0].copy()
+            ref_img_metas['filename'] = ''
+            _name_split = ref_img_metas['ori_filename'].split('/')
+            ref_img_metas['ori_filename'] = 'meas_'+'-'.join(_name_split)
+            ref_img_metas = [[[ref_img_metas]]]
+
         x, img_metas, ref_x, ref_img_metas = self.extract_feats(
             img, img_metas, ref_img, ref_img_metas)
 

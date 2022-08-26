@@ -80,6 +80,33 @@ class BaseSCIDetector(BaseModule, metaclass=ABCMeta):
                 'img_norm_cfg'. For details on the values of these keys see
                 `mmtrack/datasets/pipelines/formatting.py:VideoCollect`.
         """
+        # # ------ sci data -> arguments ------
+        # img = frames['img']
+        # img_metas = frames['img_metas']
+        # gt_bboxes = frames['gt_bboxes']
+        # gt_labels = frames['gt_labels']
+        # gt_instance_ids = frames['gt_instance_ids']
+        # gt_bboxes_ignore = None
+        # gt_masks = None
+        # proposals = None
+
+        # ref_img = None
+        # ref_img_metas = None
+        # ref_gt_bboxes = None
+        # ref_gt_labels = None
+        # ref_gt_instance_ids = None
+        # ref_gt_bboxes_ignore = None
+        # ref_gt_masks = None
+        # ref_proposals = None
+
+        # ##  ---------------------------------------
+        # # augments arrange
+        # assert len(img) == 1, \
+        #     'sci detection only supports 1 batch size per gpu for now.'
+        # all_imgs = img[0]
+        # sci_mask = sci_mask[0]
+        # coded_meas = coded_meas[0]
+        # ##  ---------------------------------------
         pass
 
     @abstractmethod
@@ -161,8 +188,8 @@ class BaseSCIDetector(BaseModule, metaclass=ABCMeta):
             assert 'proposals' not in kwargs
             return self.aug_test(frames, sci_mask, coded_meas, **kwargs)
 
-    # @auto_fp16(apply_to=('img', 'ref_img'))
-    def forward(self, frames, sci_mask, coded_meas, return_loss=None, **kwargs):
+    @auto_fp16(apply_to=('sci_mask', 'coded_meas'))
+    def forward(self, frames, sci_mask, coded_meas, return_loss=True, **kwargs):
         """Calls either :func:`forward_train` or :func:`forward_test` depending
         on whether ``return_loss`` is ``True``.
 
@@ -243,7 +270,7 @@ class BaseSCIDetector(BaseModule, metaclass=ABCMeta):
         loss, log_vars = self._parse_losses(losses)
 
         outputs = dict(
-            loss=loss, log_vars=log_vars, num_samples=len(data['img_metas']))
+            loss=loss, log_vars=log_vars, num_samples=len(data['sci_mask'][0]))
 
         return outputs
 

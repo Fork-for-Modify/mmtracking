@@ -27,9 +27,11 @@
             "program": "./tools/train.py",
             "console": "integratedTerminal",
             "args": [
-                "./configs/vid/scidet/sci_fcos_faster_rcnn_r50_dc5_1x_imagenetvid.py",
+                "./configs/scidet/sci_troi_uadetracsci.py",
                 "--work-dir",
-                "./output/test/"
+                "./output/test/",
+                "--gpu-id",
+                "6"
             ],
             "justMyCode": false
         },

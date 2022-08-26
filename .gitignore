@@ -1,10 +1,13 @@
 # zzh
 *.mp4
 *.mat
+*.pth
+/*.png
+
 results/
 result/
 bak/
-*.pth
+zzh/
 data/
 output/
 model_zoo/
