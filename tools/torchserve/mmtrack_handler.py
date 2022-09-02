@@ -5,7 +5,7 @@ import os
 import cv2
 import torch
 
-from mmtrack.apis import inference_vid, init_model
+from mmtrack.apis import inference_vid, init_scidet_model
 
 try:
     from ts.torch_handler.base_handler import BaseHandler
@@ -28,7 +28,7 @@ class MMtrackHandler(BaseHandler):
         checkpoint = os.path.join(model_dir, serialized_file)
         self.config_file = os.path.join(model_dir, 'config.py')
 
-        self.model = init_model(self.config_file, checkpoint, self.device)
+        self.model = init_scidet_model(self.config_file, checkpoint, self.device)
         self.score_thr = 0.5
         self.initialized = True
 

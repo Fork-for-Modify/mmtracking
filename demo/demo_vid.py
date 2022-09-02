@@ -6,7 +6,7 @@ from argparse import ArgumentParser
 
 import mmcv
 
-from mmtrack.apis import inference_vid, init_model
+from mmtrack.apis import inference_vid, init_scidet_model
 
 
 def main():
@@ -62,21 +62,21 @@ def main():
         fps = int(fps)
 
     # build the model from a config file and a checkpoint file
-    model = init_model(args.config, args.checkpoint, device=args.device)
+    model = init_scidet_model(args.config, args.checkpoint, device=args.device)
 
     prog_bar = mmcv.ProgressBar(len(imgs))
     # test and show/save the images
-    for i, img in enumerate(imgs):
-        if isinstance(img, str):
-            img = osp.join(args.input, img)
-            img = mmcv.imread(img)
+    for i, img_name in enumerate(imgs):
+        if isinstance(img_name, str):
+            img_path = osp.join(args.input, img_name)
+            img = mmcv.imread(img_path)
 
         result = inference_vid(model, img, frame_id=i)
         if args.output is not None:
             if IN_VIDEO or OUT_VIDEO:
                 out_file = osp.join(out_path, f'{i:06d}.jpg')
             else:
-                out_file = osp.join(out_path, img.rsplit(os.sep, 1)[-1])
+                out_file = osp.join(out_path, img_name.rsplit(os.sep, 1)[-1])
         else:
             out_file = None
         model.show_result(

@@ -6,7 +6,7 @@ from addict import Dict
 from mmdet.models import build_detector
 
 from ..builder import MODELS, build_scidecoder
-from .sci_base import BaseSCIDetector
+from .scidet_base import BaseSCIDetector
 
 
 @MODELS.register_module()

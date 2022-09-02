@@ -122,12 +122,11 @@ class SCIDataArrange(object):
     - sci_mask: sci encoding mask
     - coded_meas: coded measurement
     
-
     """
 
-    def __init__(self):  # , num_key_frames=1
-        pass
-        # self.num_key_frames = num_key_frames
+    # def __init__(self):  # , num_key_frames=1
+    #     pass
+    #     # self.num_key_frames = num_key_frames
 
     def concat_one_mode_results(self, results):
         """Concatenate the results of the same mode."""
@@ -249,9 +248,9 @@ class SCIFormatBundle(object):
             list. Defaults to 'ref'.
     """
 
-    def __init__(self):  # , ref_prefix='ref'
-        pass
-        # self.ref_prefix = ref_prefix
+    # def __init__(self):  # , ref_prefix='ref'
+    #     pass
+    #     # self.ref_prefix = ref_prefix
 
     def __call__(self, sci_results):
         """Transform and format common fields in results.
@@ -310,15 +309,102 @@ class SCIFormatBundle(object):
             raise KeyError('Missing `sci_mask` in `sci_results`')
         
         # format `coded_meas` to C*H*W
-        coded_meas = to_tensor(np.transpose(
-            sci_results['coded_meas'], (2, 0, 1)))
+        coded_meas = np.transpose(sci_results['coded_meas'], (2, 0, 1))
 
         # collect formatted results
         sci_results['frames'] = frames
         sci_results['sci_mask'] = DC(to_tensor(sci_mask), stack=True)
-        sci_results['coded_meas'] = DC(coded_meas, stack=True)
+        sci_results['coded_meas'] = DC(to_tensor(coded_meas), stack=True)
 
         return sci_results
 
     def __repr__(self):
         return self.__class__.__name__
+
+
+@PIPELINES.register_module()
+class SCIMultiImagesToTensor(object):
+    """Multi images to tensor.
+
+    1. Transpose and convert image/multi-images to Tensor.
+    2. Add keys and corresponding values into the outputs.
+
+    """
+
+    # def __init__(self, ref_prefix='ref'):
+    #     self.ref_prefix = ref_prefix
+
+    def __call__(self, sci_results):
+        """Multi images in `sci_results` to tensor.
+
+        Transpose and convert image/multi-images to Tensor.
+
+        Args:
+            results (dict): dict.
+
+        Returns:
+            dict: Each key in the first dict of `results` remains unchanged.
+            Each key in the second dict of `results` adds `self.ref_prefix`
+            as prefix.
+        """
+        frames = sci_results['frames']
+
+        # format frames
+        frames = self.images_to_tensor(frames)
+
+        # format `sci_mask` according to `frames`
+        if 'sci_mask' in sci_results:
+            sci_mask = sci_results['sci_mask']
+            if len(sci_mask.shape) == 3:
+                sci_mask = np.ascontiguousarray(
+                    sci_mask.transpose(2, 0, 1))  # Cr*H*W
+            else:
+                sci_mask = np.ascontiguousarray(
+                    sci_mask.transpose(3, 2, 0, 1))  # Cr*C*H*W
+        else:
+            raise KeyError('Missing `sci_mask` in `sci_results`')
+
+        # format `coded_meas` to C*H*W
+        coded_meas = np.transpose(sci_results['coded_meas'], (2, 0, 1))
+
+        # collect formatted results
+        sci_results['frames'] = frames
+        sci_results['sci_mask'] = to_tensor(sci_mask)
+        sci_results['coded_meas'] = to_tensor(coded_meas)
+
+        return sci_results
+
+    def images_to_tensor(self, results):
+        """Transpose and convert images/multi-images to Tensor."""
+        if 'img' in results:
+            img = results['img']
+            if len(img.shape) == 3:
+                # (H, W, 3) to (3, H, W)
+                img = np.ascontiguousarray(img.transpose(2, 0, 1))
+            else:
+                # (H, W, 3, N) to (N, 3, H, W)
+                img = np.ascontiguousarray(img.transpose(3, 2, 0, 1))
+            results['img'] = to_tensor(img)
+        if 'proposals' in results:
+            results['proposals'] = to_tensor(results['proposals'])
+        if 'img_metas' in results:
+            results['img_metas'] = DC(results['img_metas'], cpu_only=True)
+        return results
+
+# the same as formatting.py, omitted
+# @PIPELINES.register_module()
+# class ToList(object):
+#     """Use list to warp each value of the input dict.
+
+#     Args:
+#         results (dict): Result dict contains the data to convert.
+
+#     Returns:
+#         dict: Updated result dict contains the data to convert.
+#     """
+
+#     def __call__(self, results):
+#         out = {}
+#         for k, v in results.items():
+#             out[k] = [v]
+#         return out

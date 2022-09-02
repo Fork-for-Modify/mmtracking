@@ -34,7 +34,7 @@ _base_ = [
 # evaluation = dict(metric=['bbox'], interval=7)
 
 # dataset settings
-data_root = '/hdd/0/dkm/mmtracking_lite/data/ILSVRC1/'  # zzh:数据集根目录
+data_root = '/hdd/0/zzh/dataset/UA_DETRAC/coco_style/'  # zzh:数据集根目录
 dataset_type = 'ImagenetVIDDataset'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)

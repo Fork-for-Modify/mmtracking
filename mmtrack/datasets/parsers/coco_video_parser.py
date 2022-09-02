@@ -109,7 +109,24 @@ class CocoVID(COCO):
 
         return list(ids)
 
+    # def get_img_ids_from_vid(self, vidId):
+    #     """Get image ids from given video id.
+
+    #     Args:
+    #         vidId (int): The given video id.
+
+    #     Returns:
+    #         list[int]: Image ids of given video id.
+    #     """
+    #     img_infos = self.vidToImgs[vidId]
+    #     ids = list(np.zeros([len(img_infos)], dtype=np.int64))
+    #     for img_info in img_infos:
+    #         ids[img_info['frame_id']] = img_info['id']
+    #     return ids
+
+    
     def get_img_ids_from_vid(self, vidId):
+        # zzh: modify to adapt to too frame missing cases
         """Get image ids from given video id.
 
         Args:
@@ -119,9 +136,13 @@ class CocoVID(COCO):
             list[int]: Image ids of given video id.
         """
         img_infos = self.vidToImgs[vidId]
-        ids = list(np.zeros([len(img_infos)], dtype=np.int64))
-        for img_info in img_infos:
-            ids[img_info['frame_id']] = img_info['id']
+        img_num = len(img_infos)
+        ids = list(np.zeros([img_num], dtype=np.int64))
+        frame_ids = [img_info['frame_id'] for img_info in img_infos]
+        frame_id_sorted_idx = np.argsort(np.array(frame_ids))
+        # store ids according to the order of frame_ids
+        for idx in frame_id_sorted_idx:
+            ids[idx] = img_infos[idx]['id']
         return ids
 
     def get_ins_ids_from_vid(self, vidId):

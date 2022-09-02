@@ -14,12 +14,12 @@ from mmcv.runner import get_dist_info
 from mmdet.core import encode_mask_results
 
 
-def single_gpu_test(model,
-                    data_loader,
-                    show=False,
-                    out_dir=None,
-                    fps=3,
-                    show_score_thr=0.3):
+def scidet_single_gpu_test(model,
+                           data_loader,
+                           show=False,
+                           out_dir=None,
+                           fps=3,
+                           show_score_thr=0.3):
     """Test model with single gpu.
 
     Args:
@@ -46,11 +46,12 @@ def single_gpu_test(model,
         with torch.no_grad():
             result = model(return_loss=False, rescale=True, **data)
 
-        batch_size = data['img'][0].size(0)
+        batch_size = data['frames']['img'][0].size(0)
         if show or out_dir:
-            assert batch_size == 1, 'Only support batch_size=1 when testing.'
-            img_tensor = data['img'][0]
-            img_meta = data['img_metas'][0].data[0][0]
+            # zzh: change here for sci
+            # assert batch_size == 1, 'zzh: batch_size>1 NotImp. '
+            img_tensor = data['frames']['img'][0]
+            img_meta = data['frames']['img_metas'].data[0][0]
             img = tensor2imgs(img_tensor, **img_meta['img_norm_cfg'])[0]
 
             h, w, _ = img_meta['img_shape']
@@ -107,16 +108,19 @@ def single_gpu_test(model,
             if 'mask' in key:
                 result[key] = encode_mask_results(result[key])
 
-        for k, v in result.items():
-            results[k].append(v)
+        # rearrange results, separate Cr frames' results
+        result = [{'det_bboxes': result['det_bboxes'][k]}
+                  for k in range(batch_size)]
+        for m in range(batch_size):
+            for k, v in result[m].items():
+                results[k].append(v)
 
-        for _ in range(batch_size):
-            prog_bar.update()
+        prog_bar.update()
 
     return results  # {'det_bboxes': [200*[30*[2, 5]]]}
 
 
-def multi_gpu_test(model, data_loader, tmpdir=None, gpu_collect=False):
+def scidet_multi_gpu_test(model, data_loader, tmpdir=None, gpu_collect=False):
     """Test model with multiple gpus.
 
     This method tests model with multiple gpus and collects the results

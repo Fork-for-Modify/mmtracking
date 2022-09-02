@@ -10,28 +10,121 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
+            // "args": [
+            //     "--config-file",
+            //     "configs/fcos/fcos_imprv_R_50_FPN_1x_zzh.yaml",
+            //     "MODEL.WEIGHT",
+            //     "FCOS_imprv_R_50_FPN_1x.pth",
+            //     "TEST.IMS_PER_BATCH",
+            //     "6"
+            // ],
+            "justMyCode": false
+        },
+        {
+            "name": "Train",
+            "type": "python",
+            "request": "launch",
+            "program": "./tools/scidet_train.py",
+            "console": "integratedTerminal",
             "args": [
-                "--config-file",
-                "configs/fcos/fcos_imprv_R_50_FPN_1x_zzh.yaml",
-                "MODEL.WEIGHT",
-                "FCOS_imprv_R_50_FPN_1x.pth",
-                "TEST.IMS_PER_BATCH",
-                "1"
+                "./configs/scidet/scidet_troi_uadetracsci.py",
+                "--work-dir",
+                "./output/tmp/train",
+                "--gpu-id",
+                "6"
             ],
             "justMyCode": false
         },
         {
-            "name": "Python: Train",
+            "name": "Train ROI",
             "type": "python",
             "request": "launch",
             "program": "./tools/train.py",
             "console": "integratedTerminal",
             "args": [
-                "./configs/scidet/sci_troi_uadetracsci.py",
+                "./configs/vid/temporal_roi_align/selsa_troialign_faster_rcnn_r50_dc5_7e_uadetracvid_zzh.py",
                 "--work-dir",
-                "./output/test/",
+                "./output/tmp/train",
+                "--gpu-id",
+                "1"
+            ],
+            "justMyCode": false
+        },
+        {
+            "name": "Test",
+            "type": "python",
+            "request": "launch",
+            "program": "./tools/scidet_test.py",
+            "console": "integratedTerminal",
+            "args": [
+                "./configs/scidet/scidet_troi_uadetracsci.py",
+                "--checkpoint",
+                "./record/temporalROI_train1/latest.pth",
+                "--out",
+                "./output/tmp/test/res.pkl",
+                "--eval",
+                "bbox",
+                "--show-dir",
+                "./output/tmp/test/res_imgs/",
                 "--gpu-id",
                 "6"
+            ],
+            "justMyCode": false
+        },
+        {
+            "name": "Test TROI",
+            "type": "python",
+            "request": "launch",
+            "program": "./tools/test.py",
+            "console": "integratedTerminal",
+            "args": [
+                "./configs/vid/temporal_roi_align/selsa_troialign_faster_rcnn_r50_dc5_7e_uadetracvid_zzh.py",
+                "--checkpoint",
+                "./model_zoo/temporalROI/selsa_troialign_faster_rcnn_r50_dc5_7e_imagenetvid_20210820_162714-939fd657.pth",
+                "--out",
+                "./output/tmp/test/res.pkl",
+                "--eval",
+                "bbox",
+                "--gpu-id",
+                "6"
+            ],
+            "justMyCode": false
+        },
+        {
+            "name": "Demo",
+            "type": "python",
+            "request": "launch",
+            "program": "./tools/scidet_demo.py",
+            "console": "integratedTerminal",
+            "args": [
+                "./configs/scidet/scidet_troi_uadetracsci.py",
+                "--checkpoint",
+                "./record/temporalROI_train1/latest.pth",
+                "--input",
+                "./data/uadetrac_40201_200/VID/val/40201/",
+                "--output",
+                "./output/tmp/test/",
+                "--device",
+                "cuda:1"
+            ],
+            "justMyCode": false
+        },
+        {
+            "name": "Demo TROI",
+            "type": "python",
+            "request": "launch",
+            "program": "./demo/demo_vid.py",
+            "console": "integratedTerminal",
+            "args": [
+                "./configs/vid/temporal_roi_align/selsa_troialign_faster_rcnn_r50_dc5_7e_imagenetvid.py",
+                "--checkpoint",
+                "./model_zoo/temporalROI/selsa_troialign_faster_rcnn_r50_dc5_7e_imagenetvid_20210820_162714-939fd657.pth",
+                "--input",
+                "./demo/demo.mp4",
+                "--output",
+                "./output/tmp/test/",
+                "--device",
+                "cuda:6"
             ],
             "justMyCode": false
         },

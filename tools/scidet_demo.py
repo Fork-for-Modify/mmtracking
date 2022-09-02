@@ -4,17 +4,17 @@ import os.path as osp
 import tempfile
 from argparse import ArgumentParser
 
-import cv2
 import mmcv
 
-from mmtrack.apis import inference_sot, init_scidet_model
+from mmtrack.apis import inference_scidet, init_scidet_model
 
 
 def main():
     parser = ArgumentParser()
     parser.add_argument('config', help='Config file')
     parser.add_argument('--input', help='input video file')
-    parser.add_argument('--output', help='output video file (mp4 format)')
+    parser.add_argument(
+        '--output', help='output video file (mp4 format) or images')
     parser.add_argument('--checkpoint', help='Checkpoint file')
     parser.add_argument(
         '--device', default='cuda:0', help='Device used for inference')
@@ -24,11 +24,12 @@ def main():
         default=False,
         help='whether to show visualizations.')
     parser.add_argument(
-        '--color', default=(0, 255, 0), help='Color of tracked bbox lines.')
+        '--score-thr', type=float, default=0.8, help='bbox score threshold')
+    parser.add_argument(
+        '--Cr', type=int, default=10, help='compressive ratio for SCI encoding')
     parser.add_argument(
         '--thickness', default=3, type=int, help='Thickness of bbox lines.')
-    parser.add_argument('--fps', type=int, help='FPS of the output video')
-    parser.add_argument('--gt_bbox_file', help='The path of gt_bbox file')
+    parser.add_argument('--fps', help='FPS of the output video')
     args = parser.parse_args()
 
     # load images
@@ -37,12 +38,12 @@ def main():
             filter(lambda x: x.endswith(('.jpg', '.png', '.jpeg')),
                    os.listdir(args.input)),
             key=lambda x: int(x.split('.')[0]))
+        imgs = [osp.join(args.input, img) for img in imgs]  # full path
         IN_VIDEO = False
     else:
         imgs = mmcv.VideoReader(args.input)
         IN_VIDEO = True
 
-    OUT_VIDEO = False
     # define output
     if args.output is not None:
         if args.output.endswith('.mp4'):
@@ -53,6 +54,7 @@ def main():
             if len(_out) > 1:
                 os.makedirs(_out[0], exist_ok=True)
         else:
+            OUT_VIDEO = False
             out_path = args.output
             os.makedirs(out_path, exist_ok=True)
     fps = args.fps
@@ -66,38 +68,36 @@ def main():
     # build the model from a config file and a checkpoint file
     model = init_scidet_model(args.config, args.checkpoint, device=args.device)
 
-    prog_bar = mmcv.ProgressBar(len(imgs))
+    num_meas = len(imgs)//args.Cr  # discard rest images (<Cr)
+    prog_bar = mmcv.ProgressBar(num_meas)
     # test and show/save the images
-    for i, img in enumerate(imgs):
-        if isinstance(img, str):
-            img_path = osp.join(args.input, img)
-            img = mmcv.imread(img_path)
-        if i == 0:
-            if args.gt_bbox_file is not None:
-                bboxes = mmcv.list_from_file(args.gt_bbox_file)
-                init_bbox = list(map(float, bboxes[0].split(',')))
-            else:
-                init_bbox = list(cv2.selectROI(args.input, img, False, False))
+    # for i, img in enumerate(imgs):
+    for i in range(num_meas):
+        results = inference_scidet(model, imgs, meas_id=i, ref_img_sampler=dict(
+            num_ref_imgs=args.Cr, method='right'))
 
-            # convert (x1, y1, w, h) to (x1, y1, x2, y2)
-            init_bbox[2] += init_bbox[0]
-            init_bbox[3] += init_bbox[1]
+        # rearrange results
+        results = [{'det_bboxes': results['det_bboxes'][k]}
+                   for k in range(args.Cr)]
 
-        result = inference_sot(model, img, init_bbox, frame_id=i)
         if args.output is not None:
             if IN_VIDEO or OUT_VIDEO:
                 out_file = osp.join(out_path, f'{i:06d}.jpg')
             else:
-                out_file = osp.join(out_path, img_path.rsplit(os.sep, 1)[-1])
+                out_file = [osp.join(out_path, imgs[i*args.Cr+m].rsplit(
+                    os.sep, 1)[-1]) for m in range(args.Cr)]
         else:
             out_file = None
-        model.show_result(
-            img,
-            result,
-            show=args.show,
-            wait_time=int(1000. / fps) if fps else 0,
-            out_file=out_file,
-            thickness=args.thickness)
+
+        for k in range(args.Cr):
+            model.show_result(
+                imgs[i*args.Cr+k],
+                results[k],
+                score_thr=args.score_thr,
+                show=args.show,
+                wait_time=int(1000. / fps) if fps else 0,
+                out_file=out_file[k],
+                thickness=args.thickness)
         prog_bar.update()
 
     if args.output and OUT_VIDEO:

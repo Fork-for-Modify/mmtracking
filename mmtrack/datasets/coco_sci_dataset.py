@@ -1,4 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import os.path as osp
+import tempfile
 import random
 
 import numpy as np
@@ -46,6 +48,35 @@ class CocoSCIDataset(CocoDataset):
         super().__init__(*args, **kwargs)
         self.logger = get_root_logger()
 
+    def format_results(self, results, jsonfile_prefix=None, **kwargs):
+        """Format the results to json (standard format for COCO evaluation).
+
+        Args:
+            results (list[tuple | numpy.ndarray]): Testing results of the
+                dataset.
+            jsonfile_prefix (str | None): The prefix of json files. It includes
+                the file path and the prefix of filename, e.g., "a/b/prefix".
+                If not specified, a temp file will be created. Default: None.
+
+        Returns:
+            tuple: (result_files, tmp_dir), result_files is a dict containing \
+                the json filepaths, tmp_dir is the temporal directory created \
+                for saving json files when jsonfile_prefix is not specified.
+        """
+        assert isinstance(results, list), 'results must be a list'
+        # assert len(results) == len(self), (
+        #     'The length of results is not equal to the dataset len: {} != {}'.
+        #     format(len(results), len(self)))
+
+
+        if jsonfile_prefix is None:
+            tmp_dir = tempfile.TemporaryDirectory()
+            jsonfile_prefix = osp.join(tmp_dir.name, 'results')
+        else:
+            tmp_dir = None
+        result_files = self.results2json(results, jsonfile_prefix)
+        return result_files, tmp_dir
+    
     def load_annotations(self, ann_file):
         """Load annotations from COCO/COCOVID style annotation file.
 
@@ -77,8 +108,10 @@ class CocoSCIDataset(CocoDataset):
         data_infos = []
         self.vid_ids = self.coco.get_vid_ids()
         self.img_ids = []
+        self.all_img_ids = []
         for vid_id in self.vid_ids:
             img_ids = self.coco.get_img_ids_from_vid(vid_id)
+            self.all_img_ids.extend(img_ids)
             if self.key_img_sampler is not None:
                 img_ids = self.key_img_sampling(img_ids,
                                                 **self.key_img_sampler)
@@ -99,7 +132,7 @@ class CocoSCIDataset(CocoDataset):
                          stride=1,
                          num_ref_imgs=1,
                          filter_key_img=False,
-                         method='bilateral',
+                         method='right',
                          return_key_img=False):
         """Sampling reference frames in the same video for key frame.
 
@@ -118,7 +151,9 @@ class CocoSCIDataset(CocoDataset):
             method (str): The sampling method. Options are 'bilateral',
                 xxx. 'bilateral' denotes reference images are uniformly sampled 
                 from both sides of key frame (key frame is the center frame of the sampled frames).
-                Default: 'bilateral'.
+                Default: 'bilateral'. 'right' denotes reference images are sampled from right 
+                sides of the key frame (key frame is on the left of the sampled frames).
+                Default: 'right'.
             return_key_img (bool) [Deprecated]: If True, the information of key frame is
                 returned, otherwise, not returned. Default: False.
 
@@ -138,6 +173,16 @@ class CocoSCIDataset(CocoDataset):
 
             # clip sampling ids to valid range
             ref_frame_ids = [k if k >= 0 else 0 for k in ref_frame_ids]
+            ref_frame_ids = [k if k <= len(img_ids)-1 else len(
+                img_ids)-1 for k in ref_frame_ids]
+            ref_img_ids = [img_ids[k] for k in ref_frame_ids]
+        elif method == 'right':
+            sampling_ticks = list(range(0, stride*num_ref_imgs, stride))
+            # shift left tick to frame_id to get valid ref_frame_ids
+            ref_frame_ids = [k+frame_id for k in sampling_ticks]
+
+            # clip sampling ids to valid range
+            # ref_frame_ids = [k if k >= 0 else 0 for k in ref_frame_ids]
             ref_frame_ids = [k if k <= len(img_ids)-1 else len(
                 img_ids)-1 for k in ref_frame_ids]
             ref_img_ids = [img_ids[k] for k in ref_frame_ids]

@@ -70,7 +70,7 @@ def parse_args():
         nargs='+',
         action=DictAction,
         help='custom options for evaluation, the key-value pair in xxx=yyy '
-        'format will be kwargs for dataset.evaluate() function')
+        'format (no space beside =) will be kwargs for dataset.evaluate() function')
     parser.add_argument(
         '--launcher',
         choices=['none', 'pytorch', 'slurm', 'mpi'],
@@ -100,20 +100,20 @@ def main():
 
     cfg = Config.fromfile(args.config)
     if cfg.get('USE_MMDET', False):
-        from mmdet.apis import multi_gpu_test, single_gpu_test
+        from mmdet.apis import scidet_multi_gpu_test, scidet_single_gpu_test
         from mmdet.datasets import build_dataloader
         from mmdet.models import build_detector as build_model
         if 'detector' in cfg.model:
             cfg.model = cfg.model.detector
     elif cfg.get('TRAIN_REID', False):
-        from mmdet.apis import multi_gpu_test, single_gpu_test
+        from mmdet.apis import scidet_multi_gpu_test, scidet_single_gpu_test
         from mmdet.datasets import build_dataloader
 
         from mmtrack.models import build_reid as build_model
         if 'reid' in cfg.model:
             cfg.model = cfg.model.reid
     else:
-        from mmtrack.apis import multi_gpu_test, single_gpu_test
+        from mmtrack.apis import scidet_multi_gpu_test, scidet_single_gpu_test
         from mmtrack.datasets import build_dataloader
         from mmtrack.models import build_model
     if args.cfg_options is not None:
@@ -180,7 +180,7 @@ def main():
 
     if not distributed:
         model = MMDataParallel(model, device_ids=cfg.gpu_ids)
-        outputs = single_gpu_test(
+        outputs = scidet_single_gpu_test(
             model,
             data_loader,
             args.show,
@@ -191,11 +191,12 @@ def main():
             model.cuda(),
             device_ids=[torch.cuda.current_device()],
             broadcast_buffers=False)
-        outputs = multi_gpu_test(model, data_loader, args.tmpdir,
-                                 args.gpu_collect)
-    
-    # outputs: # {'det_bboxes': [200*[30*[2, 5]]]}
+        outputs = scidet_multi_gpu_test(model, data_loader, args.tmpdir,
+                                        args.gpu_collect)
+
     rank, _ = get_dist_info()
+    # zzh: restore all_img_ids to img_ids for evaluation
+    dataset.img_ids = dataset.all_img_ids
     if rank == 0:
         if args.out:
             print(f'\nwriting results to {args.out}')
@@ -212,7 +213,7 @@ def main():
             ]
             for key in eval_hook_args:
                 eval_kwargs.pop(key, None)
-            eval_kwargs.update(dict(metric=args.eval, **kwargs)) # use eval config assigned in args rather than config file
+            eval_kwargs.update(dict(metric=args.eval, **kwargs))
             metric = dataset.evaluate(outputs, **eval_kwargs)
             print(metric)
             metric_dict = dict(

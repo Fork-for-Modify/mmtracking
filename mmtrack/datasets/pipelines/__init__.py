@@ -13,7 +13,7 @@ from .transforms import (SeqBboxJitter, SeqBlurAug, SeqBrightnessAug,
                          SeqPhotoMetricDistortion, SeqRandomCrop,
                          SeqRandomFlip, SeqResize, SeqShiftScaleAug)
 from .sci_proc import SCIEncoding
-from .sci_formating import SCIDataCollect, SCIDataArrange, SCIFormatBundle
+from .sci_formating import SCIDataCollect, SCIDataArrange, SCIFormatBundle, SCIMultiImagesToTensor
 __all__ = [
     'PIPELINES', 'LoadMultiImagesFromFile', 'SeqLoadAnnotations', 'SeqResize',
     'SeqNormalize', 'SeqRandomFlip', 'SeqPad', 'SeqCvtColor', 'SeqDefaultFormatBundle',
@@ -22,5 +22,5 @@ __all__ = [
     'SeqCropLikeSiamFC', 'SeqShiftScaleAug', 'SeqBlurAug', 'SeqColorAug',
     'ToList', 'ReIDFormatBundle', 'SeqGrayAug', 'SeqBrightnessAug', 'SeqBboxJitter',
     'SeqCropLikeStark', 'TridentSampling', 'ConcatSameTypeFrames', 'PairSampling',
-    'SCIEncoding', 'SCIDataCollect', 'SCIDataArrange', 'SCIFormatBundle'
+    'SCIEncoding', 'SCIDataCollect', 'SCIDataArrange', 'SCIFormatBundle', 'SCIMultiImagesToTensor'
 ]

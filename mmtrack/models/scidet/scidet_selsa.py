@@ -6,7 +6,7 @@ from addict import Dict
 from mmdet.models import build_detector
 
 from ..builder import MODELS, build_scidecoder
-from .sci_base import BaseSCIDetector
+from .scidet_base import BaseSCIDetector
 
 
 @MODELS.register_module()
@@ -59,22 +59,23 @@ class SCISELSA(BaseSCIDetector):
     def forward_train(self, frames, sci_mask, coded_meas, **kwargs):
         """
         Args:
-        sci_mask: sci encoding masks
-        coded_meas: coded measurements
+        sci_mask (Tensor): sci encoding masks, (1, N, C, H, W)
+        coded_meas (Tensor): coded measurements, (1, C, H, W)
         frames: original annotated video frames contain the following keys:
-            img (Tensor): of shape (N, C, H, W) encoding input images.
+            img (Tensor): of shape (1, N, C, H, W) encoding input images.
                 Typically these should be mean centered and std scaled.
 
-            img_metas (list[dict]): list of image info dict where each dict
+            img_metas (list[list[dicts]]): list of image info dict where each dict
                 has: 'img_shape', 'scale_factor', 'flip', and may also contain
                 'filename', 'ori_shape', 'pad_shape', and 'img_norm_cfg'.
                 For details on the values of these keys see
                 `mmtrack/datasets/pipelines/formatting.py:VideoCollect`.
 
             gt_bboxes (list[Tensor]): Ground truth bboxes for each image with
-                shape (num_gts, 4) in [tl_x, tl_y, br_x, br_y] format.
+                shape (num_gts, 5) in [frame_id, tl_x, tl_y, br_x, br_y] format.
 
-            gt_labels (list[Tensor]): class indices corresponding to each box.
+            gt_labels (list[Tensor]): class indices corresponding to each box with
+                shape (num_gts, 2) in [frame_id, class_id] format.
 
             gt_instance_ids (None | list[Tensor]): specify the instance id for
                 each ground truth bbox.
@@ -108,7 +109,6 @@ class SCISELSA(BaseSCIDetector):
 
         # sci decoder
         all_scidec, meas_re = self.scidecoder(coded_meas, sci_mask)
-        ref_img = meas_re  # use the normalized measurement as the ref image
 
         # ---------------------------------------
         # data assign
@@ -123,7 +123,7 @@ class SCISELSA(BaseSCIDetector):
         ref_proposals = None
         # use meas_re as ref img
         if meas_re is not None:
-            ref_img = meas_re.unsqueeze(0)  # ref_img: (1,N,C,H,W)
+            ref_img = meas_re.unsqueeze(0)  # ref_img: (1,C,H,W)
             ref_img_metas = frames['img_metas'][0][0].copy()
             ref_img_metas['filename'] = ''
             _name_split = ref_img_metas['ori_filename'].split('/')
@@ -133,8 +133,8 @@ class SCISELSA(BaseSCIDetector):
 
         all_imgs = torch.cat((img, ref_img), dim=0)
         all_x = self.detector.extract_feat(all_imgs)
-        x = []
-        ref_x = []
+        x = []  # -> [[10, 512, 34, 60]]
+        ref_x = []  # -> [[1, 512, 34, 60]]
         for i in range(len(all_x)):  # split key feature and ref feature
             x.append(all_x[i][0:10])
             ref_x.append(all_x[i][[10]])
@@ -145,6 +145,8 @@ class SCISELSA(BaseSCIDetector):
         if self.detector.with_rpn:
             proposal_cfg = self.detector.train_cfg.get(
                 'rpn_proposal', self.detector.test_cfg.rpn)
+            # rpn_losses = {'loss_rpn_cls':[v], 'loss_rpn_bbox':[v]}
+            # proposal_list = [10*[600,5]]
             rpn_losses, proposal_list = self.detector.rpn_head.forward_train(
                 x,
                 img_metas,
@@ -154,6 +156,7 @@ class SCISELSA(BaseSCIDetector):
                 proposal_cfg=proposal_cfg)
             losses.update(rpn_losses)
 
+            # ref_proposal_list = [[300,5]]
             ref_proposals_list = self.detector.rpn_head.simple_test_rpn(
                 ref_x, ref_img_metas)
         else:
@@ -171,21 +174,21 @@ class SCISELSA(BaseSCIDetector):
         """Extract features for `img` during testing.
 
         Args:
-            img (Tensor): of shape (1, C, H, W) encoding input image.
+            img (Tensor): of shape (N, C, H, W) encoding input image.
                 Typically these should be mean centered and std scaled.
 
-            img_metas (list[dict]): list of image information dict where each
+            img_metas (list[dicts]): list of image information dict where each
                 dict has: 'img_shape', 'scale_factor', 'flip', and may also
                 contain 'filename', 'ori_shape', 'pad_shape', and
                 'img_norm_cfg'. For details on the values of these keys see
                 `mmtrack/datasets/pipelines/formatting.py:VideoCollect`.
 
-            ref_img (Tensor | None): of shape (1, N, C, H, W) encoding input
+            ref_img (Tensor | None): of shape (1, M, C, H, W) encoding input
                 reference images. Typically these should be mean centered and
                 std scaled. N denotes the number of reference images. There
                 may be no reference images in some cases.
 
-            ref_img_metas (list[list[dict]] | None): The first list only has
+            ref_img_metas (list[list[dicts]] | None): The first list only has
                 one element. The second list contains image information dict
                 where each dict has: 'img_shape', 'scale_factor', 'flip', and
                 may also contain 'filename', 'ori_shape', 'pad_shape', and
@@ -217,8 +220,8 @@ class SCISELSA(BaseSCIDetector):
 
             x = self.detector.extract_feat(img)
             ref_x = self.memo.feats.copy()
-            for i in range(len(x)):
-                ref_x[i] = torch.cat((ref_x[i], x[i]), dim=0)
+            for i in range(len(x)): # zzh: for original code, len(x)=1, but for scidet = 10
+                ref_x[i] = torch.cat((ref_x[i], x[i]), dim=0) # -> ref_x: [[11,512,34,60]]
             ref_img_metas = self.memo.img_metas.copy()
             ref_img_metas.extend(img_metas)
         # test with fixed stride
@@ -264,13 +267,13 @@ class SCISELSA(BaseSCIDetector):
         """Test without augmentation.
 
         Args:
-        sci_mask: sci encoding masks
-        coded_meas: coded measurements
+        sci_mask (Tensor): sci encoding masks, (1, N, C, H, W)
+        coded_meas (Tensor): coded measurements (1, C, H, W)
         frames: original annotated video frames contain the following keys:
             img (Tensor): of shape (1, C, H, W) encoding input image.
                 Typically these should be mean centered and std scaled.
 
-            img_metas (list[dict]): list of image information dict where each
+            img_metas (list[dicts]): list of image information dict where each
                 dict has: 'img_shape', 'scale_factor', 'flip', and may also
                 contain 'filename', 'ori_shape', 'pad_shape', and
                 'img_norm_cfg'. For details on the values of these keys see
@@ -287,29 +290,55 @@ class SCISELSA(BaseSCIDetector):
             dict[str : list(ndarray)]: The detection results.
         """
 
-        # --------------------------
+       # ---------------------------------------
         # augments arrange
         assert len(coded_meas) == 1, \
             'sci detection only supports 1 batch size per gpu for now.'
         sci_mask = sci_mask[0]
         coded_meas = coded_meas[0]
-        # --------------------------
+        # ---------------------------------------
 
+        # sci decoder
         all_scidec, meas_re = self.scidecoder(coded_meas, sci_mask)
 
+        # ---------------------------------------
+        # data assign
         img = all_scidec  # img: (N,C,H,W)
         img_metas = frames['img_metas'][0]
+        # gt_bboxes = self._data_debundle(frames['gt_bboxes'][0])
+        # gt_labels = self._data_debundle(frames['gt_labels'][0])
+        # gt_labels = [_label.squeeze(1).long() for _label in gt_labels]
+        # gt_bboxes_ignore = None
+        # gt_masks = None,
+        proposals = None
+        ref_proposals = None
         # use meas_re as ref img
         if meas_re is not None:
-            ref_img = meas_re.unsqueeze(0)  # ref_img: (1,N,C,H,W)
+            ref_img = meas_re.unsqueeze(0)  # ref_img: (1,C,H,W)
             ref_img_metas = frames['img_metas'][0][0].copy()
             ref_img_metas['filename'] = ''
-            _name_split = ref_img_metas['ori_filename'].split('/')
-            ref_img_metas['ori_filename'] = 'meas_'+'-'.join(_name_split)
-            ref_img_metas = [[[ref_img_metas]]]
+            ref_img_metas['ori_filename'] =''
+            # _name_split = ref_img_metas['ori_filename'].split('/')
+            # ref_img_metas['ori_filename'] = 'meas_'+'-'.join(_name_split)
+            ref_img_metas = [ref_img_metas]
+        # ---------------------------------------
 
-        x, img_metas, ref_x, ref_img_metas = self.extract_feats(
-            img, img_metas, ref_img, ref_img_metas)
+        
+        #----------------------------------------
+        # zzh: original extracting test features
+        # x, img_metas, ref_x, ref_img_metas = self.extract_feats(
+        #     img, img_metas, ref_img, ref_img_metas)
+        #-----------------------------------------
+        # scidet: (like extracting train features)
+        all_imgs = torch.cat((img, ref_img), dim=0)
+        all_x = self.detector.extract_feat(all_imgs)
+        x = []  # -> [[10, 512, 34, 60]]
+        ref_x = []  # -> [[1, 512, 34, 60]]
+        for i in range(len(all_x)):  # split key feature and ref feature
+            x.append(all_x[i][0:10])
+            ref_x.append(all_x[i][[10]])
+        #----------------------------------------
+        
 
         if proposals is None:
             proposal_list = self.detector.rpn_head.simple_test_rpn(
@@ -320,6 +349,8 @@ class SCISELSA(BaseSCIDetector):
             proposal_list = proposals
             ref_proposals_list = ref_proposals
 
+
+
         outs = self.detector.roi_head.simple_test(
             x,
             ref_x,
@@ -329,9 +360,7 @@ class SCISELSA(BaseSCIDetector):
             rescale=rescale)
 
         results = dict()
-        results['det_bboxes'] = outs[0]
-        if len(outs) == 2:
-            results['det_masks'] = outs[1]
+        results['det_bboxes'] = outs # outs[0]
         return results
 
     def aug_test(self, imgs, img_metas, **kwargs):

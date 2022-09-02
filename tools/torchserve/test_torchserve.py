@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 import cv2
 import requests
 
-from mmtrack.apis import inference_vid, init_model
+from mmtrack.apis import inference_vid, init_scidet_model
 
 
 def parse_args():
@@ -59,7 +59,7 @@ def main(args):
     cap.release()
     cv2.destroyAllWindows()
 
-    model = init_model(args.config, args.checkpoint, device=args.device)
+    model = init_scidet_model(args.config, args.checkpoint, device=args.device)
 
     cap = cv2.VideoCapture(args.video)
     fps = cap.get(cv2.CAP_PROP_FPS)

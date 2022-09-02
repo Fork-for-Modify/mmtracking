@@ -5,17 +5,17 @@ _base_ = [
     '../_base_/default_runtime.py'
 ]
 
-#-------------------
+# -------------------
 # import setting
-#-------------------
+# -------------------
 # custom_imports = dict(
 #     imports=['mmtrack.models.necks.my_fpn.py'],
 #     allow_failed_imports=False)
 
 
-#-------------------
+# -------------------
 # model setting
-#-------------------
+# -------------------
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 
@@ -35,15 +35,18 @@ model = dict(
             bbox_head=dict(
                 type='SelsaBBoxHead',
                 num_shared_fcs=3,
+                num_classes=30,  # zzh: hange here to 4 for uadetrac dataset training
                 aggregator=dict(
                     type='SelsaAggregator',
                     in_channels=1024,
                     num_attention_blocks=16)))),
     scidecoder=dict(type='EnergyNorm', norm4det=img_norm_cfg))
+# init_cfg=dict(
+#     type='Pretrained', checkpoint='./output/bak/train/latest.pth')
 
-#-------------------
+# -------------------
 # dataset settings
-#-------------------
+# -------------------
 
 train_pipeline = [
     dict(type='LoadMultiImagesFromFile'),
@@ -55,8 +58,9 @@ train_pipeline = [
     dict(type='SCIEncoding', fixed_mask=False, mask_path=None, norm2one=False),
     dict(
         type='SCIDataCollect',
-        keys=['img', 'gt_bboxes', 'gt_labels', 'gt_instance_ids'],
-        default_meta_key_values=dict(img_norm_cfg=img_norm_cfg)),
+        keys=['img', 'gt_bboxes', 'gt_labels', 'gt_instance_ids']
+        # default_meta_key_values=dict(img_norm_cfg=img_norm_cfg)
+    ),
     # dict(
     #     type='SCIDataCollect',
     #     keys=['img', 'gt_bboxes', 'gt_labels', 'gt_instance_ids']),
@@ -72,22 +76,28 @@ test_pipeline = [
     dict(type='SCIEncoding', fixed_mask=False, mask_path=None, norm2one=False),
     dict(
         type='SCIDataCollect',
-        keys=['img', 'gt_bboxes', 'gt_labels', 'gt_instance_ids']),
+        keys=['img']),
     dict(type='SCIDataArrange'),
-    dict(type='SCIFormatBundle')
-    # dict(type='MultiImagesToTensor', ref_prefix='ref'),
+    # dict(type='SCIFormatBundle')
+    dict(type='SCIMultiImagesToTensor')
     # dict(type='ToList')
 ]
 
 # update pipeline setting
+# zzh: small val set test for  debug
+data_root = '/hdd/0/zzh/project/SCIDet/mmlab/mmtracking/data/uadetrac_40201_200/'
 data = dict(
     train=dict(pipeline=train_pipeline),
-    val=dict(pipeline=test_pipeline),
-    test=dict(pipeline=test_pipeline))
+    val=dict(pipeline=train_pipeline),
+    test=dict(
+        # zzh: small val set test for  debug
+        ann_file=data_root + 'annotations/uadetrac_vid_val_40201.json',
+        img_prefix=data_root + 'VID',  # zzh: small val set test for  debug
+        pipeline=test_pipeline))
 
-#-------------------
+# -------------------
 # optimizer settings
-#-------------------
+# -------------------
 # optimizer
 optimizer = dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0001)
 optimizer_config = dict(
@@ -100,8 +110,11 @@ lr_config = dict(
     warmup_ratio=1.0 / 3,
     step=[2, 5])
 
-#-------------------
+# -------------------
 # runtime settings
-#-------------------
-total_epochs = 100
-evaluation = dict(metric=['bbox'], interval=7)
+# -------------------
+total_epochs = 1000
+# evaluation = dict(metric=['bbox'], interval=50) # calc mAP
+# workflow = [('val', 1), ('train', 20)]
+checkpoint_config = dict(interval=40)  # val - cal loss on val-set
+# work_dir = '../output/tmp'

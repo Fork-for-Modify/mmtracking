@@ -34,14 +34,6 @@ data1 = sci_mask[0]
 data1 = data1.detach().cpu().numpy()
 data1 = np.transpose(data1, (2, 3, 1, 0))
 
-data2 = coded_meas[0]
-data2 = data2.detach().cpu().numpy()
-data2 = np.transpose(data2, (1, 2, 0))
-
-data3 = frames['img'][0]
-data3 = data3.detach().cpu().numpy()
-data3 = np.transpose(data3, (2, 3, 1, 0))
-
 # data = data.detach().cpu().numpy()
 # data = np.transpose(data, (2, 3, 1, 0))
 

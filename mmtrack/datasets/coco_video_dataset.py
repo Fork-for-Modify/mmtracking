@@ -195,8 +195,10 @@ class CocoVideoDataset(CocoDataset):
             elif method == 'test_with_fix_stride':
                 if frame_id == 0:
                     for i in range(frame_range[0], 1):
+                        # no left frames, repeat first frame to substitute
                         ref_img_ids.append(img_ids[0])
                     for i in range(1, frame_range[1] + 1):
+                        # if no right frames, repeat last frame to substitue
                         ref_id = min(round(i * stride), len(img_ids) - 1)
                         ref_img_ids.append(img_ids[ref_id])
                 elif frame_id % stride == 0:

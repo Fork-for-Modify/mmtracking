@@ -25,12 +25,13 @@ from .vot_dataset import VOTDataset
 from .youtube_vis_dataset import YouTubeVISDataset
 from .coco_sci_dataset import CocoSCIDataset
 from .uadetrac_sci_dataset import UADETRACSCIDataset
+from .uadetrac_vid_dataset import UADETRACVIDDataset
 
 __all__ = [
     'DATASETS', 'PIPELINES', 'build_dataloader', 'build_dataset', 'CocoVID',
     'CocoVideoDataset', 'ImagenetVIDDataset', 'MOTChallengeDataset',
     'ReIDDataset', 'SOTTrainDataset', 'SOTTestDataset', 'LaSOTDataset',
-    'UAV123Dataset', 'TrackingNetDataset', 'OTB100Dataset',
+    'UAV123Dataset', 'TrackingNetDataset', 'OTB100Dataset', 'UADETRACVIDDataset',
     'YouTubeVISDataset', 'GOT10kDataset', 'VOTDataset', 'BaseSOTDataset',
     'SOTCocoDataset', 'SOTImageNetVIDDataset', 'RandomSampleConcatDataset',
     'TaoDataset', 'DanceTrackDataset', 'CocoSCIDataset', 'UADETRACSCIDataset'

@@ -1,6 +1,6 @@
 # dataset settings
 dataset_type = 'ImagenetVIDDataset'
-data_root = '/hdd/0/dkm/mmtracking_lite/data/ILSVRC1/'  # zzh:数据集根目录 | 'data/ILSVRC/'
+data_root = 'data/ILSVRC/'  # zzh:数据集根目录
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 train_pipeline = [

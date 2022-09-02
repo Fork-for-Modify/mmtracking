@@ -136,7 +136,7 @@ class SelsaRoIHead(StandardRoIHead):
             bbox2result(det_bboxes[i], det_labels[i],
                         self.bbox_head.num_classes)
             for i in range(len(det_bboxes))
-        ]
+        ]  # zzh: rearrange bbox according to labels [[ num_class*[N*5] ]]
 
         if not self.with_mask:
             return bbox_results

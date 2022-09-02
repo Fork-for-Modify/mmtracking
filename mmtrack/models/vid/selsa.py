@@ -219,9 +219,10 @@ class SELSA(BaseVideoDetector):
             x = self.detector.extract_feat(img)
             ref_x = self.memo.feats.copy()
             for i in range(len(x)):
+                # cat x to ref_x -> [11, 512, 36, 63]
                 ref_x[i] = torch.cat((ref_x[i], x[i]), dim=0)
             ref_img_metas = self.memo.img_metas.copy()
-            ref_img_metas.extend(img_metas)
+            ref_img_metas.extend(img_metas)  # cat img_metas to ref_img_metas
         # test with fixed stride
         else:
             if frame_id == 0:
@@ -312,9 +313,9 @@ class SELSA(BaseVideoDetector):
 
         if proposals is None:
             proposal_list = self.detector.rpn_head.simple_test_rpn(
-                x, img_metas)
+                x, img_metas)  # x [1, 512, 36, 63]
             ref_proposals_list = self.detector.rpn_head.simple_test_rpn(
-                ref_x, ref_img_metas)
+                ref_x, ref_img_metas)  # ref_x [11, 512, 36, 63]
         else:
             proposal_list = proposals
             ref_proposals_list = ref_proposals

@@ -1,6 +1,7 @@
 # dataset settings
 dataset_type = 'UADETRACSCIDataset'
-data_root = '/hdd/0/dkm/mmtracking_lite/data/ILSVRC1/'  # zzh:数据集根目录
+data_root = '/hdd/0/zzh/dataset/UA_DETRAC/coco_style/'  # root dir for dataset
+Cr = 10  # zzh: compressive ratio
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 train_pipeline = [
@@ -42,33 +43,27 @@ data = dict(
     workers_per_gpu=2,
     train=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/imagenet_vid_train.json',
+        ann_file=data_root + 'annotations/uadetrac_vid_train.json',
         img_prefix=data_root + 'Data/VID',
         ref_img_sampler=dict(
-            num_ref_imgs=10,  # = Cr
-            frame_range=5,  # omit
-            filter_key_img=False,  # omit
-            method='bilateral'),
+            num_ref_imgs=Cr,  # = Cr
+            method='right'),
         pipeline=train_pipeline),
     val=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/imagenet_vid_val.json',
+        ann_file=data_root + 'annotations/uadetrac_vid_val.json',
         img_prefix=data_root + 'Data/VID',
         ref_img_sampler=dict(
-            num_ref_imgs=10,  # = Cr
-            frame_range=5,  # omit
-            filter_key_img=False,  # omit
-            method='bilateral'),
-        pipeline=test_pipeline,
-        test_mode=True),
+            num_ref_imgs=Cr,  # = Cr
+            method='right'),
+        pipeline=train_pipeline),
     test=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/imagenet_vid_val.json',
+        ann_file=data_root + 'annotations/uadetrac_vid_test.json',
         img_prefix=data_root + 'Data/VID',
+        key_img_sampler=dict(interval=Cr),
         ref_img_sampler=dict(
-            num_ref_imgs=10,  # = Cr
-            frame_range=5,  # omit
-            filter_key_img=False,  # omit
-            method='bilateral'),
+            num_ref_imgs=Cr,  # = Cr
+            method='right'),
         pipeline=test_pipeline,
         test_mode=True))
