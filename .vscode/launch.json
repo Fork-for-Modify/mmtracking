@@ -64,8 +64,8 @@
                 "./output/tmp/test/res.pkl",
                 "--eval",
                 "bbox",
-                "--show-dir",
-                "./output/tmp/test/res_imgs/",
+                // "--show-dir",
+                // "./output/tmp/test/res_imgs/",
                 "--gpu-id",
                 "1"
             ],

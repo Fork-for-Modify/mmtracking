@@ -186,7 +186,7 @@ def main():
     datasets = [build_dataset(cfg.data.train)]
     if len(cfg.workflow) == 2:
         val_dataset = copy.deepcopy(cfg.data.val)
-        val_dataset.pipeline = cfg.data.train.pipeline # zzh: val use train pipeline
+        val_dataset.pipeline = cfg.data.train.pipeline # zzh: val use train pipeline in validation
         datasets.append(build_dataset(val_dataset))
         # datasets[0]-train, datasets[1]-val
     if cfg.checkpoint_config is not None:

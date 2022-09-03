@@ -43,20 +43,23 @@ def scidet_single_gpu_test(model,
     dataset = data_loader.dataset
     prev_img_meta = None
     prog_bar = mmcv.ProgressBar(len(dataset))
+    
     for i, data in enumerate(data_loader):
         with torch.no_grad():
             # {'det_bboxes':[Cr*[class_num*[instance_num,5]]]}
             results = model(return_loss=False, rescale=True, **data)
-
+        
+        Cr = data['frames']['img'][0].size(0) # compressive ratio
+        # rearrange results: [ Cr * {'det_bboxes':[class_num*[instance_num,5]]} ]
+        results = [{'det_bboxes': results['det_bboxes'][k]}
+                   for k in range(Cr)]
+        
         if show or out_dir:
             # data arrange
             img_tensors = data['frames']['img'][0]
             img_metas = data['frames']['img_metas'].data[0][0]
             imgs = tensor2imgs(img_tensors.float())
             img_num = len(imgs)
-            # rearrange results: [ Cr * {'det_bboxes':[class_num*[instance_num,5]]} ]
-            results = [{'det_bboxes': results['det_bboxes'][k]}
-                       for k in range(img_num)]
             
             for m in range(img_num):
                 img, img_meta, result = imgs[m], img_metas[m], results[m]
@@ -115,7 +118,7 @@ def scidet_single_gpu_test(model,
         #             result[key] = encode_mask_results(result[key])
 
 
-        for m in range(img_num):
+        for m in range(Cr):
             for k, v in results[m].items():
                 outputs[k].append(v)
 

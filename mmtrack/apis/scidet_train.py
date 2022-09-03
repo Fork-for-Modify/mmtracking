@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
+import copy
 import torch
 import torch.distributed as dist
 from mmcv.parallel import MMDataParallel, MMDistributedDataParallel
@@ -8,7 +9,7 @@ from mmcv.runner import (HOOKS, DistSamplerSeedHook, EpochBasedRunner,
 from mmcv.utils import build_from_cfg
 from mmdet.datasets import build_dataset
 
-from mmtrack.core import DistEvalHook, EvalHook
+from mmtrack.core import SCIDetDistEvalHook, SCIDetEvalHook
 from mmtrack.datasets import build_dataloader
 from mmtrack.utils import get_root_logger
 
@@ -142,7 +143,10 @@ def scidet_train_model(model,
 
     # register eval hooks
     if evaluate:
-        val_dataset = build_dataset(cfg.data.val, dict(test_mode=True))
+        # zzh: val use train pipeline in evaluation
+        _val_dataset = copy.deepcopy(cfg.data.val)
+        _val_dataset.pipeline = cfg.data.test.pipeline
+        val_dataset = build_dataset(_val_dataset, dict(test_mode=True))
         val_dataloader = build_dataloader(
             val_dataset,
             samples_per_gpu=1,
@@ -151,7 +155,7 @@ def scidet_train_model(model,
             shuffle=False,
             persistent_workers=cfg.data.get('persistent_workers', False))
         eval_cfg = cfg.get('evaluation', {})
-        eval_hook = DistEvalHook if distributed else EvalHook
+        eval_hook = SCIDetDistEvalHook if distributed else SCIDetEvalHook
         runner.register_hook(eval_hook(val_dataloader, **eval_cfg))
 
     # user-defined hooks

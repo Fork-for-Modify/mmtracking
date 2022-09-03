@@ -82,12 +82,12 @@ test_pipeline = [
 # update pipeline setting
 # data_root = '/hdd/0/zzh/dataset/UA_DETRAC/coco_style/'  # root dir for dataset
 # zzh: small val set test for  debug
-# data_root = '/hdd/0/zzh/project/SCIDet/mmlab/mmtracking/data/uadetrac_40201_200/'
+data_root = '/hdd/0/zzh/project/SCIDet/mmlab/mmtracking/data/uadetrac_40201_200/'
 data = dict(
     train=dict(pipeline=train_pipeline),
-    val=dict(pipeline=train_pipeline
-            #  ann_file=data_root + 'annotations/uadetrac_vid_val_40201.json',
-            #  img_prefix=data_root + 'VID'
+    val=dict(pipeline=test_pipeline,
+             ann_file=data_root + 'annotations/uadetrac_vid_val_40201.json',
+             img_prefix=data_root + 'VID'
             ),
     test=dict(
         pipeline=test_pipeline

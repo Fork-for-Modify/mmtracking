@@ -55,7 +55,7 @@ data = dict(
         ref_img_sampler=dict(
             num_ref_imgs=Cr,  # = Cr
             method='right'),
-        pipeline=train_pipeline),
+        pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
         ann_file=data_root + 'annotations/uadetrac_vid_test.json',
