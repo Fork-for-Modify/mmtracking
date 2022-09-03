@@ -49,7 +49,7 @@ data = dict(
         pipeline=train_pipeline),
     val=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/uadetrac_vid_val.json',
+        ann_file=data_root + 'annotations/uadetrac_vid_val_small.json',  # val/val_small
         img_prefix=data_root + 'Data/VID',
         key_img_sampler=dict(interval=1),
         ref_img_sampler=dict(

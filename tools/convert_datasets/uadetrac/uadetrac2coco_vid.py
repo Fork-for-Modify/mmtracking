@@ -44,7 +44,7 @@ def convert_vid(CLASSES, CLASSES_ENCODES, xml_dir, txt_path, save_dir, mode='tra
         mode (str): Convert train dataset or validation dataset. Options are
             'train', 'val', 'test'. 
     """
-    assert mode in ['train', 'val', 'test']
+    assert mode in ['train', 'val', 'test', 'val_small']
 
     # category
     categories = []
@@ -163,7 +163,7 @@ def convert_vid(CLASSES, CLASSES_ENCODES, xml_dir, txt_path, save_dir, mode='tra
 def main():
 
     # params
-    mode = 'test'  # 'train', 'test', 'val'
+    mode = 'val_small'  # 'train', 'test', 'val', 'val_small'
     xml_dir = '/hdd/0/zzh/dataset/UA_DETRAC/coco_style/annotations_xml/VID/'
     output_dir = '/hdd/0/zzh/dataset/UA_DETRAC/coco_style/annotations/'
     txt_path = '/hdd/0/zzh/dataset/UA_DETRAC/coco_style/Lists/VID_'+mode+'_frames.txt'
