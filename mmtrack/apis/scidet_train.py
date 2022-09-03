@@ -55,7 +55,7 @@ def scidet_train_model(model,
 
     Args:
         model (nn.Module): The model to be trained.
-        dataset (:obj:`Dataset`): Train dataset.
+        dataset (:obj:`Dataset`): Train <+val> dataset.
         cfg (dict): The config dict for training.
         distributed (bool): Whether to use distributed training.
             Default: False.

@@ -27,7 +27,7 @@ model = dict(
 
 # dataset settings
 # zzh: for small val set test
-# data_root = '/hdd/0/zzh/project/SCIDet/mmlab/mmtracking/data/uadetrac_40201_200/'
+data_root = '/hdd/0/zzh/project/SCIDet/mmlab/mmtracking/data/uadetrac_40201_200/'
 data = dict(
     val=dict(
         ref_img_sampler=dict(
@@ -37,8 +37,8 @@ data = dict(
             method='test_with_adaptive_stride')),
     test=dict(
         # zzh: for small val set test
-        # ann_file=data_root + 'annotations/uadetrac_vid_val_40201.json',
-        # img_prefix=data_root + 'VID',  # zzh: for small val set test
+        ann_file=data_root + 'annotations/uadetrac_vid_val_40201.json',
+        img_prefix=data_root + 'VID',  # zzh: for small val set test
         ref_img_sampler=dict(
             _delete_=True,
             num_ref_imgs=14,

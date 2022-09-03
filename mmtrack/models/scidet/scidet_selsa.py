@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import warnings
-
+import os
 import torch
 from addict import Dict
 from mmdet.models import build_detector
@@ -126,7 +126,7 @@ class SCISELSA(BaseSCIDetector):
             ref_img = meas_re.unsqueeze(0)  # ref_img: (1,C,H,W)
             ref_img_metas = frames['img_metas'][0][0].copy()
             ref_img_metas['filename'] = ''
-            _name_split = ref_img_metas['ori_filename'].split('/')
+            _name_split = ref_img_metas['ori_filename'].split(os.sep)
             ref_img_metas['ori_filename'] = 'meas_'+'-'.join(_name_split)
             ref_img_metas = [ref_img_metas]
         # ---------------------------------------

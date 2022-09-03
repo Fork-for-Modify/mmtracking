@@ -27,7 +27,7 @@ def parse_args():
     parser.add_argument(
         '--resume-from', help='the checkpoint file to resume from')
     parser.add_argument(
-        '-- no-evaluate',
+        '--no-evaluate',
         action='store_true',
         help='whether not to evaluate the checkpoint during training')
     group_gpus = parser.add_mutually_exclusive_group()
@@ -186,8 +186,9 @@ def main():
     datasets = [build_dataset(cfg.data.train)]
     if len(cfg.workflow) == 2:
         val_dataset = copy.deepcopy(cfg.data.val)
-        val_dataset.pipeline = cfg.data.train.pipeline
+        val_dataset.pipeline = cfg.data.train.pipeline # zzh: val use train pipeline
         datasets.append(build_dataset(val_dataset))
+        # datasets[0]-train, datasets[1]-val
     if cfg.checkpoint_config is not None:
         # save mmtrack version, config file content and class names in
         # checkpoints as meta data

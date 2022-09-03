@@ -9,33 +9,30 @@ train_pipeline = [
     dict(type='SeqLoadAnnotations', with_bbox=True, with_track=True),
     # dict(type='SeqCvtColor', src_color='bgr', dst_color='gray'),
     # dict(type='SeqResize', img_scale=(1000, 600), keep_ratio=True),
-    dict(type='SeqRandomFlip', share_params=True, flip_ratio=0.5),
+    # dict(type='SeqAllRandomFlip', share_params=True, flip_ratio=0.5),
     dict(type='SeqPad', size_divisor=16),
     dict(type='SCIEncoding', fixed_mask=False, mask_path=None, norm2one=False),
     dict(
         type='SCIDataCollect',
-        keys=['img', 'gt_bboxes', 'gt_labels', 'gt_instance_ids'],
-        default_meta_key_values=dict(img_norm_cfg=img_norm_cfg)),
-    # dict(
-    #     type='SCIDataCollect',
-    #     keys=['img', 'gt_bboxes', 'gt_labels', 'gt_instance_ids']),
+        keys=['img', 'gt_bboxes', 'gt_labels', 'gt_instance_ids']
+        # default_meta_key_values=dict(img_norm_cfg=img_norm_cfg)
+    ),
     dict(type='SCIDataArrange'),
     dict(type='SCIFormatBundle')
 ]
 
 test_pipeline = [
     dict(type='LoadMultiImagesFromFile'),
+    # dict(type='SeqCvtColor', src_color='bgr', dst_color='gray'),
     # dict(type='SeqResize', img_scale=(1000, 600), keep_ratio=True),
-    # dict(type='SeqRandomFlip', share_params=True, flip_ratio=0.0),
+    # dict(type='SeqAllRandomFlip', share_params=True, flip_ratio=0.5),
     dict(type='SeqPad', size_divisor=16),
     dict(type='SCIEncoding', fixed_mask=False, mask_path=None, norm2one=False),
     dict(
         type='SCIDataCollect',
-        keys=['img', 'gt_bboxes', 'gt_labels', 'gt_instance_ids']),
+        keys=['img']),
     dict(type='SCIDataArrange'),
-    dict(type='SCIFormatBundle')
-    # dict(type='MultiImagesToTensor', ref_prefix='ref'),
-    # dict(type='ToList')
+    dict(type='SCIMultiImagesToTensor')
 ]
 
 data = dict(
@@ -45,6 +42,7 @@ data = dict(
         type=dataset_type,
         ann_file=data_root + 'annotations/uadetrac_vid_train.json',
         img_prefix=data_root + 'Data/VID',
+        key_img_sampler=dict(interval=5),
         ref_img_sampler=dict(
             num_ref_imgs=Cr,  # = Cr
             method='right'),
@@ -53,6 +51,7 @@ data = dict(
         type=dataset_type,
         ann_file=data_root + 'annotations/uadetrac_vid_val.json',
         img_prefix=data_root + 'Data/VID',
+        key_img_sampler=dict(interval=1),
         ref_img_sampler=dict(
             num_ref_imgs=Cr,  # = Cr
             method='right'),

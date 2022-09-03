@@ -35,7 +35,7 @@ model = dict(
             bbox_head=dict(
                 type='SelsaBBoxHead',
                 num_shared_fcs=3,
-                num_classes=30,  # zzh: hange here to 4 for uadetrac dataset training
+                num_classes=4,  # zzh: hange here to 4 for uadetrac dataset training
                 aggregator=dict(
                     type='SelsaAggregator',
                     in_channels=1024,
@@ -53,7 +53,7 @@ train_pipeline = [
     dict(type='SeqLoadAnnotations', with_bbox=True, with_track=True),
     # dict(type='SeqCvtColor', src_color='bgr', dst_color='gray'),
     # dict(type='SeqResize', img_scale=(1000, 600), keep_ratio=True),
-    dict(type='SeqRandomFlip', share_params=True, flip_ratio=0.5),
+    # dict(type='SeqAllRandomFlip', share_params=True, flip_ratio=0.5),
     dict(type='SeqPad', size_divisor=16),
     dict(type='SCIEncoding', fixed_mask=False, mask_path=None, norm2one=False),
     dict(
@@ -61,39 +61,40 @@ train_pipeline = [
         keys=['img', 'gt_bboxes', 'gt_labels', 'gt_instance_ids']
         # default_meta_key_values=dict(img_norm_cfg=img_norm_cfg)
     ),
-    # dict(
-    #     type='SCIDataCollect',
-    #     keys=['img', 'gt_bboxes', 'gt_labels', 'gt_instance_ids']),
     dict(type='SCIDataArrange'),
     dict(type='SCIFormatBundle')
 ]
 
 test_pipeline = [
     dict(type='LoadMultiImagesFromFile'),
+    # dict(type='SeqCvtColor', src_color='bgr', dst_color='gray'),
     # dict(type='SeqResize', img_scale=(1000, 600), keep_ratio=True),
-    # dict(type='SeqRandomFlip', share_params=True, flip_ratio=0.0),
+    # dict(type='SeqAllRandomFlip', share_params=True, flip_ratio=0.5),
     dict(type='SeqPad', size_divisor=16),
     dict(type='SCIEncoding', fixed_mask=False, mask_path=None, norm2one=False),
     dict(
         type='SCIDataCollect',
         keys=['img']),
     dict(type='SCIDataArrange'),
-    # dict(type='SCIFormatBundle')
     dict(type='SCIMultiImagesToTensor')
-    # dict(type='ToList')
 ]
 
 # update pipeline setting
+# data_root = '/hdd/0/zzh/dataset/UA_DETRAC/coco_style/'  # root dir for dataset
 # zzh: small val set test for  debug
-data_root = '/hdd/0/zzh/project/SCIDet/mmlab/mmtracking/data/uadetrac_40201_200/'
+# data_root = '/hdd/0/zzh/project/SCIDet/mmlab/mmtracking/data/uadetrac_40201_200/'
 data = dict(
     train=dict(pipeline=train_pipeline),
-    val=dict(pipeline=train_pipeline),
+    val=dict(pipeline=train_pipeline
+            #  ann_file=data_root + 'annotations/uadetrac_vid_val_40201.json',
+            #  img_prefix=data_root + 'VID'
+            ),
     test=dict(
-        # zzh: small val set test for  debug
-        ann_file=data_root + 'annotations/uadetrac_vid_val_40201.json',
-        img_prefix=data_root + 'VID',  # zzh: small val set test for  debug
-        pipeline=test_pipeline))
+        pipeline=test_pipeline
+        # ann_file=data_root + 'annotations/uadetrac_vid_val.json',
+        # ann_file=data_root + 'annotations/uadetrac_vid_val_40201.json',
+        # img_prefix=data_root + 'VID'
+    ))
 
 # -------------------
 # optimizer settings
@@ -113,8 +114,8 @@ lr_config = dict(
 # -------------------
 # runtime settings
 # -------------------
-total_epochs = 1000
-# evaluation = dict(metric=['bbox'], interval=50) # calc mAP
-# workflow = [('val', 1), ('train', 20)]
-checkpoint_config = dict(interval=40)  # val - cal loss on val-set
+total_epochs = 50
+evaluation = dict(metric=['bbox'], interval=5) # calc mAP
+# workflow = [('train', 5), ('val', 1)]
+checkpoint_config = dict(interval=1)  # val - cal loss on val-set
 # work_dir = '../output/tmp'

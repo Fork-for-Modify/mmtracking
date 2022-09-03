@@ -1,1 +1,0 @@
-python ./demo/demo_vid.py     ./configs/vid/selsa/selsa_faster_rcnn_r101_dc5_1x_imagenetvid.py --input mot.mp4 --checkpoint ./model_zoo/selsa_faster_rcnn_r101_dc5_1x_imagenetvid_20201218_172724-aa961bcc.pth --output ./output

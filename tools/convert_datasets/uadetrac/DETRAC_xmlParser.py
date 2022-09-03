@@ -40,7 +40,7 @@ def ConvertVOCXml(file_path="", file_name=""):
 
             folder = doc.createElement("folder")
             folder.appendChild(doc.createTextNode(
-                output_file_name.split('/')[0]))
+                output_file_name.split(os.sep)[0]))
             annotation.appendChild(folder)
 
             filename = doc.createElement("filename")

@@ -44,7 +44,6 @@ def single_gpu_test(model,
     prog_bar = mmcv.ProgressBar(len(dataset))
     for i, data in enumerate(data_loader):
         with torch.no_grad():
-            # {'det_bboxes':[class_num*[instance_num,5]]}
             result = model(return_loss=False, rescale=True, **data)
 
         batch_size = data['img'][0].size(0)
@@ -62,12 +61,10 @@ def single_gpu_test(model,
 
             if out_dir:
                 # zzh: use only digits for out_file name to faciliate the following video generating
-                dir_name, file_name = img_meta['ori_filename'].rsplit(
-                    os.sep, 1)
+                dir_name, file_name = img_meta['ori_filename'].rsplit(os.sep, 1)
                 img_name, img_type = file_name.rsplit('.', 1)
                 img_digit_name = ''.join(list(filter(str.isdigit, img_name)))
-                out_file = osp.join(out_dir, dir_name,
-                                    img_digit_name+'.'+img_type)
+                out_file = osp.join(out_dir,dir_name, img_digit_name+'.'+img_type)
             else:
                 out_file = None
 
@@ -90,13 +87,23 @@ def single_gpu_test(model,
             if out_dir and need_write_video:
                 prev_img_prefix, prev_img_name = prev_img_meta[
                     'ori_filename'].rsplit(os.sep, 1)
+                prev_img_str, prev_img_type = prev_img_name.split('.')
+                prev_img_idx = ''.join(list(filter(str.isdigit, prev_img_str)))
+                prev_filename_tmpl = '{:0' + str(
+                    len(prev_img_idx)) + 'd}.' + prev_img_type
                 prev_img_dirs = f'{out_dir}/{prev_img_prefix}'
-                frames2video(
+                prev_img_names = sorted(os.listdir(prev_img_dirs))
+                prev_start_frame_id = int(prev_img_names[0].split('.')[0])
+                prev_end_frame_id = int(prev_img_names[-1].split('.')[0])
+
+                mmcv.frames2video(
                     prev_img_dirs,
                     f'{prev_img_dirs}/_out_video.mp4',
                     fps=fps,
                     fourcc='mp4v',
-                    filename_tmpl='*.jpg',
+                    filename_tmpl=prev_filename_tmpl,
+                    start=prev_start_frame_id,
+                    end=prev_end_frame_id,
                     show_progress=False)
 
             prev_img_meta = img_meta
@@ -111,7 +118,7 @@ def single_gpu_test(model,
         for _ in range(batch_size):
             prog_bar.update()
 
-    return results  # {'det_bboxes': [all_frame_num*[class_num*[instance_num, 5]]]}
+    return results  # {'det_bboxes': [200*[30*[2, 5]]]}
 
 
 def multi_gpu_test(model, data_loader, tmpdir=None, gpu_collect=False):

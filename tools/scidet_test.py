@@ -47,8 +47,8 @@ def parse_args():
     parser.add_argument(
         '--show-score-thr',
         type=float,
-        default=0.3,
-        help='score threshold (default: 0.3)')
+        default=0.8,
+        help='score threshold (default: 0.8)')
     parser.add_argument(
         '--show-dir', help='directory where painted images will be saved')
     parser.add_argument(
@@ -194,6 +194,7 @@ def main():
         outputs = scidet_multi_gpu_test(model, data_loader, args.tmpdir,
                                         args.gpu_collect)
 
+    # outputs: {'det_bboxes': [all_frame_num*[class_num*[instance_num, 5]]]}
     rank, _ = get_dist_info()
     # zzh: restore all_img_ids to img_ids for evaluation
     dataset.img_ids = dataset.all_img_ids

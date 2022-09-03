@@ -31,7 +31,7 @@
                 "--work-dir",
                 "./output/tmp/train",
                 "--gpu-id",
-                "6"
+                "1"
             ],
             "justMyCode": false
         },
@@ -67,7 +67,7 @@
                 "--show-dir",
                 "./output/tmp/test/res_imgs/",
                 "--gpu-id",
-                "6"
+                "1"
             ],
             "justMyCode": false
         },
@@ -86,7 +86,7 @@
                 "--eval",
                 "bbox",
                 "--gpu-id",
-                "6"
+                "1"
             ],
             "justMyCode": false
         },
@@ -103,7 +103,7 @@
                 "--input",
                 "./data/uadetrac_40201_200/VID/val/40201/",
                 "--output",
-                "./output/tmp/test/",
+                "./output/tmp/demo/res_img/",
                 "--device",
                 "cuda:1"
             ],
@@ -122,7 +122,7 @@
                 "--input",
                 "./demo/demo.mp4",
                 "--output",
-                "./output/tmp/test/",
+                "./output/tmp/test/res_img/",
                 "--device",
                 "cuda:6"
             ],

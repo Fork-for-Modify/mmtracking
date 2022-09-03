@@ -18,7 +18,7 @@ video_dirs = sorted(os.listdir(root_dir))  # get video dir video_dirmes
 with open(dst_path, 'w') as f:
     for video_dir in video_dirs:
 
-        video_full_dir = "".join([root_dir, video_dir, '/'])
+        video_full_dir = "".join([root_dir, video_dir, os.sep])
         frames = sorted(os.listdir(video_full_dir))
         frame_ids = [int(frame[3:8])
                      for frame in frames]  # frames e.g.: img00001.xml
