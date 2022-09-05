@@ -58,7 +58,7 @@ def scidet_single_gpu_test(model,
             # data arrange
             img_tensors = data['frames']['img'][0]
             img_metas = data['frames']['img_metas'].data[0][0]
-            imgs = tensor2imgs(img_tensors.float())
+            imgs = tensor2imgs(img_tensors.float(), to_rgb=False)
             img_num = len(imgs)
             
             for m in range(img_num):

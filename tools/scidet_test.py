@@ -196,8 +196,6 @@ def main():
 
     # outputs: {'det_bboxes': [all_frame_num*[class_num*[instance_num, 5]]]}
     rank, _ = get_dist_info()
-    # zzh: restore all_img_ids to img_ids for evaluation
-    dataset.img_ids = dataset.all_img_ids
     if rank == 0:
         if args.out:
             print(f'\nwriting results to {args.out}')

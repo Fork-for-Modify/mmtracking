@@ -48,6 +48,23 @@ class CocoSCIDataset(CocoDataset):
         super().__init__(*args, **kwargs)
         self.logger = get_root_logger()
 
+    def _det2json(self, results):
+        """Convert detection results to COCO json style."""
+        json_results = []
+        for idx in range(len(self.all_img_ids)):
+            img_id = self.all_img_ids[idx]
+            result = results[idx]
+            for label in range(len(result)):
+                bboxes = result[label]
+                for i in range(bboxes.shape[0]):
+                    data = dict()
+                    data['image_id'] = img_id
+                    data['bbox'] = self.xyxy2xywh(bboxes[i])
+                    data['score'] = float(bboxes[i][4])
+                    data['category_id'] = self.cat_ids[label]
+                    json_results.append(data)
+        return json_results
+    
     def format_results(self, results, jsonfile_prefix=None, **kwargs):
         """Format the results to json (standard format for COCO evaluation).
 
@@ -101,7 +118,7 @@ class CocoSCIDataset(CocoDataset):
         Returns:
             list[dict]: Annotation information from COCOVID api.
         """
-        self.coco = CocoVID(ann_file)
+        self.coco = CocoVID(ann_file) # load all the annotations from the ann_file
         self.cat_ids = self.coco.get_cat_ids(cat_names=self.CLASSES)
         self.cat2label = {cat_id: i for i, cat_id in enumerate(self.cat_ids)}
 
@@ -381,7 +398,8 @@ class CocoSCIDataset(CocoDataset):
         for metric in metrics:
             if metric not in allowed_metrics:
                 raise KeyError(f'metric {metric} is not supported.')
-
+        # zzh: restore all_img_ids to img_ids for evaluation
+        self.img_ids = self.all_img_ids
         eval_results = dict()
         if 'track' in metrics:
             assert len(self.data_infos) == len(results['track_bboxes'])

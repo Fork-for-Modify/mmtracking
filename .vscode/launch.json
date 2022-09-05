@@ -59,15 +59,15 @@
             "args": [
                 "./configs/scidet/scidet_troi_uadetracsci.py",
                 "--checkpoint",
-                "./record/temporalROI_train1/latest.pth",
+                "./output/dev/train/latest.pth",
                 "--out",
                 "./output/tmp/test/res.pkl",
                 "--eval",
                 "bbox",
-                // "--show-dir",
-                // "./output/tmp/test/res_imgs/",
+                "--show-dir",
+                "./output/tmp/test/res_imgs/",
                 "--gpu-id",
-                "1"
+                "2"
             ],
             "justMyCode": false
         },

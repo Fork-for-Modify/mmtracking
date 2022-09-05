@@ -133,7 +133,7 @@ def convert_vid(CLASSES, CLASSES_ENCODES, xml_dir, txt_path, save_dir, mode='tra
                     instance_id=instance_id,
                     bbox=[x1, y1, w, h],
                     area=w * h,
-                    # iscrowd=False,
+                    iscrowd=False,
                     # occluded=occluded,
                     speed=speed,
                     truncation_ratio=truncation_ratio)
@@ -163,7 +163,7 @@ def convert_vid(CLASSES, CLASSES_ENCODES, xml_dir, txt_path, save_dir, mode='tra
 def main():
 
     # params
-    mode = 'val_small'  # 'train', 'test', 'val', 'val_small'
+    mode = 'val'  # 'train', 'test', 'val', 'val_small'
     xml_dir = '/hdd/0/zzh/dataset/UA_DETRAC/coco_style/annotations_xml/VID/'
     output_dir = '/hdd/0/zzh/dataset/UA_DETRAC/coco_style/annotations/'
     txt_path = '/hdd/0/zzh/dataset/UA_DETRAC/coco_style/Lists/VID_'+mode+'_frames.txt'
