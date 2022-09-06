@@ -54,14 +54,14 @@ python ./tools/scidet_test.py \
     --no-evaluate # no evaluation
 
 e.g. SCIDet
-python ./tools/scidet_test.py ./configs/scidet/scidet_troi_uadetracsci.py --checkpoint ./output/dev/train/latest.pth --work-dir ./output/tmp/test/ --out ./output/tmp/test/scidet_res_alltest.pkl --eval bbox --gpu-id 3 --show-dir ./output/tmp/test/res_imgs/
+python ./tools/scidet_test.py ./configs/scidet/scidet_troi_uadetracsci.py --checkpoint ./output/dev/train/latest.pth --work-dir ./output/tmp/test/ --out ./output/tmp/test/scidet_res_test.pkl --eval bbox --gpu-id 3 --show-dir ./output/tmp/test/res_imgs/
 
 e.g. TemporalROI
 python tools/test.py ./configs/vid/temporal_roi_align/selsa_troialign_faster_rcnn_r50_dc5_7e_uadetracvid_zzh.py --checkpoint ./model_zoo/temporalROI/selsa_troialign_faster_rcnn_r50_dc5_7e_imagenetvid_20210820_162714-939fd657.pth --out ./output/tmp/test/res.pkl --eval bbox --gpu-id 1 --show-dir ./output/tmp/test/res_imgs/
 
 
 多GPU
-python ./tools/dist_test.sh \
+python ./tools/dist_scidet_test.sh \
     ${config_file_path} \
     --checkpoint ${checkpoint_path} \
     --out ${bbox result .pkl path} \
@@ -70,10 +70,11 @@ python ./tools/dist_test.sh \
     --no-evaluate # no evaluation
 
 e.g. SCIDet
-CUDA_VISIBLE_DEVICES=0,1 ./tools/dist_test.sh ./configs/scidet/scidet_troi_uadetracsci.py 2 --checkpoint ./record/temporalROI_train1/latest.pth --out ./output/tmp/test/scidet_res.pkl --eval bbox
+CUDA_VISIBLE_DEVICES=4,5 PORT=29506 ./tools/dist_scidet_test.sh ./configs/scidet/scidet_troi_uadetracsci.py 2 --checkpoint ./output/dev/train/latest.pth --out ./output/tmp/test/scidet_res.pkl --eval bbox
+
 
 e.g. TemporalROI
-CUDA_VISIBLE_DEVICES=0,1 ./tools/dist_test.sh ./configs/vid/temporal_roi_align/selsa_troialign_faster_rcnn_r50_dc5_7e_uadetracvid_zzh.py 2 --checkpoint ./model_zoo/temporalROI/selsa_troialign_faster_rcnn_r50_dc5_7e_imagenetvid_20210820_162714-939fd657.pth --out ./output/tmp/test/res.pkl --eval bbox
+CUDA_VISIBLE_DEVICES=0,1 PORT=29506 ./tools/dist_test.sh ./configs/vid/temporal_roi_align/selsa_troialign_faster_rcnn_r50_dc5_7e_uadetracvid_zzh.py 2 --checkpoint ./model_zoo/temporalROI/selsa_troialign_faster_rcnn_r50_dc5_7e_imagenetvid_20210820_162714-939fd657.pth --out ./output/tmp/test/res.pkl --eval bbox
 
 ### 模型 Demo/Inference
 python ./tools/scidet_demo.py \

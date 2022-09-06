@@ -1,11 +1,11 @@
-# Copyright (c) OpenMMLab. All rights reserved.
+# NotImp
 import warnings
 
 import torch
 from addict import Dict
 from mmdet.models import build_detector
 
-from ..builder import MODELS, build_scidecoder
+from ..builder import MODELS, build_predet
 from .scidet_base import BaseSCIDetector
 
 
@@ -37,7 +37,7 @@ class SCIFCOS(BaseSCIDetector):
                 detector.init_cfg = None
         self.detector = build_detector(detector)
         if scidecoder:
-            self.scidecoder = build_scidecoder(scidecoder)
+            self.scidecoder = build_predet(scidecoder)
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
 

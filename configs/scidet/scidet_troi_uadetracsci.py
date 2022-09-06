@@ -22,7 +22,8 @@ img_norm_cfg = dict(
 model = dict(
     type='SCISELSA',
     # zzh: SCI preproc
-    scidecoder=dict(type='EnergyNorm', norm4det=img_norm_cfg),
+    scidecoder=dict(type='EnergyNormDec'),
+    norm4det=dict(type='SeqNorm4Det', norm_cfg=img_norm_cfg),
     detector=dict(
         roi_head=dict(
             type='SelsaRoIHead',
@@ -51,9 +52,9 @@ model = dict(
             min_bbox_size=0),
         rcnn=dict(
             # use a larger score_thr, as SCIDet's blur effect tends to cause more FP (duplicate bbox)
-            score_thr=0.001,
+            # score_thr=0.01,
             nms=dict(type='nms', iou_threshold=0.5),
-            max_per_img=100)
+            max_per_img=50)
     ))
 # init_cfg=dict(
 #     type='Pretrained', checkpoint='./output/bak/train/latest.pth')
@@ -66,8 +67,8 @@ train_pipeline = [
     dict(type='LoadMultiImagesFromFile'),
     dict(type='SeqLoadAnnotations', with_bbox=True, with_track=True),
     # dict(type='SeqCvtColor', src_color='bgr', dst_color='gray'),
-    # dict(type='SeqResize', img_scale=(1000, 600), keep_ratio=True),
-    # dict(type='SeqAllRandomFlip', share_params=True, flip_ratio=0.5),
+    # dict(type='SeqResize', img_scale=(960, 540), keep_ratio=True),
+    dict(type='SeqRandomFlip', share_params=True, flip_ratio=0.5),
     dict(type='SeqPad', size_divisor=16),
     dict(type='SCIEncoding', fixed_mask=False, mask_path=None, norm2one=False),
     dict(
@@ -94,7 +95,7 @@ test_pipeline = [
 ]
 
 # update pipeline setting
-# data_root = '/hdd/0/zzh/dataset/UA_DETRAC/coco_style/'  # root dir for dataset
+data_root = '/hdd/0/zzh/dataset/UA_DETRAC/coco_style/'  # root dir for dataset
 # zzh: small val set test for  debug
 # data_root = '/hdd/0/zzh/project/SCIDet/mmlab/mmtracking/data/uadetrac_40201_200/'
 data = dict(
@@ -105,7 +106,7 @@ data = dict(
             ),
     test=dict(
         pipeline=test_pipeline,
-        # ann_file=data_root + 'annotations/uadetrac_vid_val_small.json',
+        ann_file=data_root + 'annotations/uadetrac_vid_val_small.json',
         # ann_file=data_root + 'annotations/uadetrac_vid_val_40201.json',
         # img_prefix=data_root + 'VID'
     ))

@@ -5,7 +5,7 @@ import torch
 from addict import Dict
 from mmdet.models import build_detector
 
-from ..builder import MODELS, build_scidecoder
+from ..builder import MODELS, build_predet
 from .scidet_base import BaseSCIDetector
 
 
@@ -20,6 +20,7 @@ class SCISELSA(BaseSCIDetector):
     def __init__(self,
                  detector,
                  scidecoder=None,
+                 norm4det=None,
                  pretrains=None,
                  init_cfg=None,
                  frozen_modules=None,
@@ -37,7 +38,9 @@ class SCISELSA(BaseSCIDetector):
                 detector.init_cfg = None
         self.detector = build_detector(detector)
         if scidecoder:
-            self.scidecoder = build_scidecoder(scidecoder)
+            self.scidecoder = build_predet(scidecoder)
+        if norm4det:
+            self.norm4det = build_predet(norm4det)
         assert hasattr(self.detector, 'roi_head'), \
             'selsa video detector only supports two stage detector'
         self.train_cfg = train_cfg
@@ -109,6 +112,8 @@ class SCISELSA(BaseSCIDetector):
 
         # sci decoder
         all_scidec, meas_re = self.scidecoder(coded_meas, sci_mask)
+        all_scidec = self.norm4det(all_scidec)
+        meas_re = self.norm4det(meas_re)
 
         # ---------------------------------------
         # data assign
@@ -300,6 +305,8 @@ class SCISELSA(BaseSCIDetector):
 
         # sci decoder
         all_scidec, meas_re = self.scidecoder(coded_meas, sci_mask)
+        all_scidec = self.norm4det(all_scidec)
+        meas_re = self.norm4det(meas_re)
 
         # ---------------------------------------
         # data assign

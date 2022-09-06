@@ -11,7 +11,7 @@ import torch
 import torch.distributed as dist
 from mmcv.image import tensor2imgs
 from mmcv.runner import get_dist_info
-from mmdet.core import encode_mask_results
+# from mmdet.core import encode_mask_results
 from ..utils.utils_viz_zzh import frames2video
 
 
@@ -150,7 +150,7 @@ def scidet_multi_gpu_test(model, data_loader, tmpdir=None, gpu_collect=False):
         dict[str, list]: The prediction results.
     """
     model.eval()
-    results = defaultdict(list)
+    outputs = defaultdict(list)
     dataset = data_loader.dataset
     rank, world_size = get_dist_info()
     if rank == 0:
@@ -158,25 +158,26 @@ def scidet_multi_gpu_test(model, data_loader, tmpdir=None, gpu_collect=False):
     time.sleep(2)  # This line can prevent deadlock problem in some cases.
     for i, data in enumerate(data_loader):
         with torch.no_grad():
-            result = model(return_loss=False, rescale=True, **data)
-        for key in result:
-            if 'mask' in key:
-                result[key] = encode_mask_results(result[key])
+            results = model(return_loss=False, rescale=True, **data)
 
-        for k, v in result.items():
-            results[k].append(v)
+        Cr = data['frames']['img'][0].size(0)
+        results = [{'det_bboxes': results['det_bboxes'][k]}
+                   for k in range(Cr)]
+
+        for m in range(Cr):
+            for k, v in results[m].items():
+                outputs[k].append(v)
 
         if rank == 0:
-            batch_size = data['img'][0].size(0)
-            for _ in range(batch_size * world_size):
+            for _ in range(world_size):
                 prog_bar.update()
 
     # collect results from all ranks
     if gpu_collect:
         raise NotImplementedError
     else:
-        results = collect_results_cpu(results, tmpdir)
-    return results
+        outputs = collect_results_cpu(outputs, tmpdir)
+    return outputs
 
 
 def collect_results_cpu(result_part, tmpdir=None):

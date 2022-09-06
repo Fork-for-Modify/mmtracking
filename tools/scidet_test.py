@@ -15,7 +15,15 @@ from mmdet.apis import set_random_seed
 
 from mmtrack.core import setup_multi_processes
 from mmtrack.datasets import build_dataset
+import numpy as np
 
+# fix random seeds for reproducibility
+SEED = 0
+np.random.seed(SEED)
+torch.manual_seed(SEED)
+torch.cuda.manual_seed(SEED)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
 
 def parse_args():
     parser = argparse.ArgumentParser(description='mmtrack test model')

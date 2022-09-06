@@ -19,6 +19,15 @@ from mmtrack.core import setup_multi_processes
 from mmtrack.datasets import build_dataset
 from mmtrack.utils import collect_env, get_root_logger
 
+import numpy as np
+
+# fix random seeds for reproducibility
+SEED = 0
+np.random.seed(SEED)
+torch.manual_seed(SEED)
+torch.cuda.manual_seed(SEED)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a model')
