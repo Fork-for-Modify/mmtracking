@@ -9,7 +9,7 @@ train_pipeline = [
     dict(type='SeqLoadAnnotations', with_bbox=True, with_track=True),
     # dict(type='SeqCvtColor', src_color='bgr', dst_color='gray'),
     # dict(type='SeqResize', img_scale=(1000, 600), keep_ratio=True),
-    # dict(type='SeqAllRandomFlip', share_params=True, flip_ratio=0.5),
+    dict(type='SeqRandomFlip', share_params=True, flip_ratio=0.5),
     dict(type='SeqPad', size_divisor=16),
     dict(type='SCIEncoding', fixed_mask=False, mask_path=None, norm2one=False),
     dict(
@@ -25,7 +25,7 @@ test_pipeline = [
     dict(type='LoadMultiImagesFromFile'),
     # dict(type='SeqCvtColor', src_color='bgr', dst_color='gray'),
     # dict(type='SeqResize', img_scale=(1000, 600), keep_ratio=True),
-    # dict(type='SeqAllRandomFlip', share_params=True, flip_ratio=0.5),
+    # dict(type='SeqRandomFlip', share_params=True, flip_ratio=0.5),
     dict(type='SeqPad', size_divisor=16),
     dict(type='SCIEncoding', fixed_mask=False, mask_path=None, norm2one=False),
     dict(

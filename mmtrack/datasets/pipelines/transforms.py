@@ -713,7 +713,8 @@ class SeqRandomFlip(RandomFlip):
     def __call__(self, results):
         """Call function.
 
-        For each dict in results, call `RandomFlip` to randomly flip image.
+        For each dict in results, call `RandomFlip` to randomly flip image. 
+        By setting share_params=True, the dicts in the results will be flipped in the same manner.
 
         Args:
             results (list[dict]): List of dict that from

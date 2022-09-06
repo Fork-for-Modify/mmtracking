@@ -3,6 +3,7 @@
 # -----------------------
 import math
 import cv2
+from cv2 import add
 import mmcv
 import numpy as np
 from mmcv.utils import print_log
@@ -19,15 +20,17 @@ class SCIEncoding(object):
     Args:
         fixed_mask (bool): If True, use loaded fixed masks; if false, use randomly generated masks. Defaults to True.
         mask_path (str): mask path for using fixed mask
+        noise_sigma (float,0-1): guassian noise ratio for measurement (i.e std assuming the pixel to be 0-1)
         mask_shape (H*W*Cr): mask shape
-        norm2one (bool): normalize original frames to one before encoding (/255)
+        norm2one (bool): normalize original frames to 1 before encoding (/255)
 
     """
 
-    def __init__(self, fixed_mask=True, mask_path=None, norm2one=True):
+    def __init__(self, fixed_mask=True, mask_path=None, noise_sigma=0, norm2one=True):
         super(SCIEncoding, self).__init__()
         self.fixed_mask = fixed_mask
         self.norm2one = norm2one
+        self.noise_std = noise_sigma if norm2one else noise_sigma*255
         if self.fixed_mask:
             # load mask from .npy file
             self.sci_mask = np.load(mask_path)
@@ -51,6 +54,11 @@ class SCIEncoding(object):
             if self.norm2one:
                _results['img'] = _results['img'].astype(np.float32)/255
             coded_meas += _results['img']*sci_mask[..., i]
+
+        # add gaussian noise
+        if self.noise_std != 0:
+            coded_meas += self.noise_std * \
+                np.random.randn(*coded_meas.shape).astype(coded_meas.dtype)
 
         # debug
         # cv2.imwrite('./_debug_img.png', np.uint8(results[0]['img']))

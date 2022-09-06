@@ -21,6 +21,8 @@ img_norm_cfg = dict(
 
 model = dict(
     type='SCISELSA',
+    # zzh: SCI preproc
+    scidecoder=dict(type='EnergyNorm', norm4det=img_norm_cfg),
     detector=dict(
         roi_head=dict(
             type='SelsaRoIHead',
@@ -40,7 +42,6 @@ model = dict(
                     type='SelsaAggregator',
                     in_channels=1024,
                     num_attention_blocks=16)))),
-    scidecoder=dict(type='EnergyNorm', norm4det=img_norm_cfg),
     # train_cfg = dict(xx),
     test_cfg=dict(
         rpn=dict(
@@ -50,7 +51,7 @@ model = dict(
             min_bbox_size=0),
         rcnn=dict(
             # use a larger score_thr, as SCIDet's blur effect tends to cause more FP (duplicate bbox)
-            # score_thr=0.01,
+            score_thr=0.001,
             nms=dict(type='nms', iou_threshold=0.5),
             max_per_img=100)
     ))
@@ -93,7 +94,7 @@ test_pipeline = [
 ]
 
 # update pipeline setting
-data_root = '/hdd/0/zzh/dataset/UA_DETRAC/coco_style/'  # root dir for dataset
+# data_root = '/hdd/0/zzh/dataset/UA_DETRAC/coco_style/'  # root dir for dataset
 # zzh: small val set test for  debug
 # data_root = '/hdd/0/zzh/project/SCIDet/mmlab/mmtracking/data/uadetrac_40201_200/'
 data = dict(
@@ -104,7 +105,7 @@ data = dict(
             ),
     test=dict(
         pipeline=test_pipeline,
-        ann_file=data_root + 'annotations/uadetrac_vid_val_small.json',
+        # ann_file=data_root + 'annotations/uadetrac_vid_val_small.json',
         # ann_file=data_root + 'annotations/uadetrac_vid_val_40201.json',
         # img_prefix=data_root + 'VID'
     ))
