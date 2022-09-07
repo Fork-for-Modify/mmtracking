@@ -2,6 +2,7 @@
 # snapshot compressive image processing
 # -----------------------
 import math
+from this import d
 import cv2
 from cv2 import add
 import mmcv
@@ -32,27 +33,34 @@ class SCIEncoding(object):
         self.norm2one = norm2one
         self.noise_std = noise_sigma if norm2one else noise_sigma*255
         if self.fixed_mask:
-            # load mask from .npy file
-            self.sci_mask = np.load(mask_path)
-            self.mask_shape = self.sci_mask.shape
-        # else:
-        #     self.sci_mask = None
-        #     self.mask_shape = mask_shape
+            if mask_path == 'all_one':
+                # all_one mask, i.e. frame sum, generate in __call__
+                self.sci_mask = None
+                self.mask_type = mask_path
+            else:
+                # load mask from .npy file
+                self.sci_mask = np.load(mask_path)
+                self.mask_shape = self.sci_mask.shape
 
     def __call__(self, results):
         # get encoding mask
+        frame_shape = [*results[0]['img'].shape, len(results)]
         if self.fixed_mask:
-            sci_mask = self.sci_mask
+            if self.sci_mask is None and self.mask_type == 'all_one':
+                sci_mask = np.ones((frame_shape), dtype=np.float32)
+            else:
+                sci_mask = self.sci_mask
+                assert frame_shape == self.mask_shape, \
+                    f'frame shape {frame_shape} should be equal to mask shape {self.mask_shape}'
         else:
-            mask_shape = [*results[0]['img'].shape, len(results)]
             sci_mask = np.random.randint(
-                0, 2, size=mask_shape).astype(np.float32)
+                0, 2, size=frame_shape).astype(np.float32)
 
         # calc coded measurement
         coded_meas = np.zeros_like(sci_mask[..., 0])
         for i, _results in enumerate(results):
             if self.norm2one:
-               _results['img'] = _results['img'].astype(np.float32)/255
+                _results['img'] = _results['img'].astype(np.float32)/255
             coded_meas += _results['img']*sci_mask[..., i]
 
         # add gaussian noise

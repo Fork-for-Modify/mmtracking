@@ -70,7 +70,7 @@ train_pipeline = [
     # dict(type='SeqResize', img_scale=(960, 540), keep_ratio=True),
     dict(type='SeqRandomFlip', share_params=True, flip_ratio=0.5),
     dict(type='SeqPad', size_divisor=16),
-    dict(type='SCIEncoding', fixed_mask=False, mask_path=None, norm2one=False),
+    dict(type='SCIEncoding', fixed_mask=False, mask_path=None, norm2one=False), # mask_path = fixed mask path | 'all_one'
     dict(
         type='SCIDataCollect',
         keys=['img', 'gt_bboxes', 'gt_labels', 'gt_instance_ids']
@@ -86,7 +86,8 @@ test_pipeline = [
     # dict(type='SeqResize', img_scale=(1000, 600), keep_ratio=True),
     # dict(type='SeqAllRandomFlip', share_params=True, flip_ratio=0.5),
     dict(type='SeqPad', size_divisor=16),
-    dict(type='SCIEncoding', fixed_mask=False, mask_path=None, norm2one=False),
+    dict(type='SCIEncoding', fixed_mask=True, mask_path='all_one',
+         norm2one=False),  # mask_path = fixed mask path | 'all_one'
     dict(
         type='SCIDataCollect',
         keys=['img']),
