@@ -68,7 +68,7 @@ def main():
     # build the model from a config file and a checkpoint file
     model = init_scidet_model(args.config, args.checkpoint, device=args.device)
 
-    num_meas = len(imgs)//args.Cr  # discard rest images (<Cr)
+    num_meas = len(imgs)//args.Cr  # use // to discard rest images (<Cr)
     prog_bar = mmcv.ProgressBar(num_meas)
     # test and show/save the images
     # for i, img in enumerate(imgs):
