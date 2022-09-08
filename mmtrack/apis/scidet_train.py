@@ -145,7 +145,8 @@ def scidet_train_model(model,
     if evaluate:
         # zzh: val use train pipeline in evaluation
         _val_dataset = copy.deepcopy(cfg.data.val)
-        _val_dataset.pipeline = cfg.data.test.pipeline
+        _val_dataset.key_img_sampler = cfg.data.test.key_img_sampler  # use test key_sampler
+        _val_dataset.pipeline = cfg.data.test.pipeline  # use test pipeline
         val_dataset = build_dataset(_val_dataset, dict(test_mode=True))
         val_dataloader = build_dataloader(
             val_dataset,
