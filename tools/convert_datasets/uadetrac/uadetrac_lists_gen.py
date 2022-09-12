@@ -9,10 +9,12 @@ import os
 # VID_train_15frames.txt
 # --------------
 interval = 1  # sampling interval
-prefix = 'val_small/'
+dataset_name = 'val_small'
 # root_dir: annotations_xml dir (contains image-wise annotations converted by DETRAC_xmlParser.py)
-root_dir = '/hdd/0/zzh/dataset/UA_DETRAC/coco_style/annotations_xml/VID/val_small/'
-dst_path = '/hdd/0/zzh/dataset/UA_DETRAC/coco_style/Lists/VID_val_small_frames.txt'
+root_dir = '/hdd/0/zzh/dataset/UA_DETRAC/coco_style/annotations_xml/VID/' + \
+    dataset_name + '/'
+dst_path = '/hdd/0/zzh/dataset/UA_DETRAC/coco_style/Lists/VID_' + \
+    dataset_name + '_frames.txt'
 
 video_dirs = sorted(os.listdir(root_dir))  # get video dir video_dirmes
 with open(dst_path, 'w') as f:
@@ -24,7 +26,7 @@ with open(dst_path, 'w') as f:
                      for frame in frames]  # frames e.g.: img00001.xml
         frame_num = len(frame_ids)
 
-        head_str = prefix + video_dir + ' 1 '
+        head_str = dataset_name + '/' + video_dir + ' 1 '
         tail_str = ' ' + str(frame_num) + '\n'
 
         for k in range(0, frame_num, interval):

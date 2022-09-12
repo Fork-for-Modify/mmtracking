@@ -1,0 +1,1 @@
+/hdd/0/zzh/dataset/UA_DETRAC/coco_style/Data/VID/

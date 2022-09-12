@@ -108,7 +108,7 @@ data = dict(
             ),
     test=dict(
         pipeline=test_pipeline,
-        ann_file=data_root + 'annotations/uadetrac_vid_val_small.json',
+        ann_file=data_root + 'annotations/uadetrac_vid_test_small.json',
         # ann_file=data_root + 'annotations/uadetrac_vid_val_40201.json',
         # img_prefix=data_root + 'VID'
     ))

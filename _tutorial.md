@@ -70,7 +70,7 @@ python ./tools/dist_scidet_test.sh \
     --no-evaluate # no evaluation
 
 e.g. SCIDet
-CUDA_VISIBLE_DEVICES=4,5 PORT=29506 ./tools/dist_scidet_test.sh ./configs/scidet/scidet_troi_uadetracsci.py 2 --checkpoint ./output/dev/train/latest.pth --out ./output/tmp/test/scidet_res.pkl --eval bbox
+CUDA_VISIBLE_DEVICES=0,7 PORT=29506 ./tools/dist_scidet_test.sh ./configs/scidet/scidet_troi_uadetracsci.py 2 --checkpoint ./output/dev/train/latest.pth --out ./output/tmp/test/scidet_res.pkl --eval bbox
 
 
 e.g. TemporalROI
