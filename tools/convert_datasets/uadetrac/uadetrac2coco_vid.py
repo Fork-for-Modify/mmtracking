@@ -163,10 +163,10 @@ def convert_vid(CLASSES, CLASSES_ENCODES, xml_dir, txt_path, save_dir, mode='tra
 def main():
 
     # params
-    mode = 'test_small'  # 'train', 'test', 'val', 'val_small', 'test_small'
-    xml_dir = '/hdd/0/zzh/dataset/UA_DETRAC/coco_style/annotations_xml/VID/'
-    output_dir = '/hdd/0/zzh/dataset/UA_DETRAC/coco_style/annotations/'
-    txt_path = '/hdd/0/zzh/dataset/UA_DETRAC/coco_style/Lists/VID_'+mode+'_frames.txt'
+    mode = 'val'  # 'train', 'test', 'val', 'val_small', 'test_small'
+    xml_dir = '/hdd/0/zzh/dataset/UA_DETRAC/coco_style_NewSplit/annotations_xml/VID/'
+    output_dir = '/hdd/0/zzh/dataset/UA_DETRAC/coco_style_NewSplit/annotations/'
+    txt_path = '/hdd/0/zzh/dataset/UA_DETRAC/coco_style_NewSplit/Lists/VID_'+mode+'_frames.txt'
 
     # info
     CLASSES = ('car', 'van', 'bus', 'others')
@@ -178,3 +178,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
