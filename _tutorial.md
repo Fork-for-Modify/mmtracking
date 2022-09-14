@@ -23,7 +23,7 @@ https://mmtracking.readthedocs.io/zh_CN/latest/tutorials/config.html
 `python tools/scidet_train.py ${CONFIG_FILE} [optional arguments]`
 
 e.g. SCIDet
-`CUDA_VISIBLE_DEVICES=1 PORT=29501 python tools/scidet_train.py ./configs/scidet/scidet_troi_uadetracsci.py --work-dir ./output/dev/train/  `
+`CUDA_VISIBLE_DEVICES=5 PORT=29501 python tools/scidet_train.py ./configs/scidet/scidet_troi_uadetracsci.py --work-dir ./output/tmp/train/  `
 
 e.g. TemporalROI
 `CUDA_VISIBLE_DEVICES=1 PORT=29501 python tools/train.py ./configs/vid/temporal_roi_align/selsa_troialign_faster_rcnn_r50_dc5_7e_uadetracvid_zzh.py --work-dir ./output/tmp/train/ `
@@ -54,7 +54,7 @@ python ./tools/scidet_test.py \
     --no-evaluate # no evaluation
 
 e.g. SCIDet
-python ./tools/scidet_test.py ./configs/scidet/scidet_troi_uadetracsci.py --checkpoint ./output/dev/train/latest.pth --work-dir ./output/tmp/test/ --out ./output/tmp/test/scidet_res_test.pkl --eval bbox --gpu-id 6 --show-dir ./output/tmp/test/res_imgs/
+python ./tools/scidet_test.py ./configs/scidet/scidet_troi_uadetracsci.py --checkpoint ./output/dev/train/latest.pth --work-dir ./output/tmp/test/ --out ./output/tmp/test/scidet_res_test.pkl --eval bbox --gpu-id 5 --show-dir ./output/tmp/test/res_imgs/
 
 e.g. TemporalROI
 python tools/test.py ./configs/vid/temporal_roi_align/selsa_troialign_faster_rcnn_r50_dc5_7e_uadetracvid_zzh.py --checkpoint ./model_zoo/temporalROI/selsa_troialign_faster_rcnn_r50_dc5_7e_imagenetvid_20210820_162714-939fd657.pth --out ./output/tmp/test/res.pkl --eval bbox --gpu-id 1 --show-dir ./output/tmp/test/res_imgs/

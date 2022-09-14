@@ -137,12 +137,13 @@ class SCISELSA(BaseSCIDetector):
         # ---------------------------------------
 
         all_imgs = torch.cat((img, ref_img), dim=0)
+        Cr = img.shape[0] # compressive ratio
         all_x = self.detector.extract_feat(all_imgs)
-        x = []  # -> [[10, 512, 34, 60]]
+        x = []  # -> [[Cr, 512, 34, 60]]
         ref_x = []  # -> [[1, 512, 34, 60]]
         for i in range(len(all_x)):  # split key feature and ref feature
-            x.append(all_x[i][0:10])
-            ref_x.append(all_x[i][[10]])
+            x.append(all_x[i][0:Cr])
+            ref_x.append(all_x[i][[Cr]])
 
         losses = dict()
 
@@ -226,7 +227,7 @@ class SCISELSA(BaseSCIDetector):
             x = self.detector.extract_feat(img)
             ref_x = self.memo.feats.copy()
             for i in range(len(x)): # zzh: for original code, len(x)=1, but for scidet = 10
-                ref_x[i] = torch.cat((ref_x[i], x[i]), dim=0) # -> ref_x: [[11,512,34,60]]
+                ref_x[i] = torch.cat((ref_x[i], x[i]), dim=0) # -> ref_x: [[Cr+1,512,34,60]]
             ref_img_metas = self.memo.img_metas.copy()
             ref_img_metas.extend(img_metas)
         # test with fixed stride
@@ -311,6 +312,7 @@ class SCISELSA(BaseSCIDetector):
         # ---------------------------------------
         # data assign
         img = all_scidec  # img: (N,C,H,W)
+        Cr = img.shape[0]  # compressive ratio
         img_metas = frames['img_metas'][0]
         # gt_bboxes = self._data_debundle(frames['gt_bboxes'][0])
         # gt_labels = self._data_debundle(frames['gt_labels'][0])
@@ -339,11 +341,11 @@ class SCISELSA(BaseSCIDetector):
         # scidet: (like extracting train features)
         all_imgs = torch.cat((img, ref_img), dim=0)
         all_x = self.detector.extract_feat(all_imgs)
-        x = []  # -> [[10, 512, 34, 60]]
+        x = []  # -> [[Cr, 512, 34, 60]]
         ref_x = []  # -> [[1, 512, 34, 60]]
         for i in range(len(all_x)):  # split key feature and ref feature
-            x.append(all_x[i][0:10])
-            ref_x.append(all_x[i][[10]])
+            x.append(all_x[i][0:Cr])
+            ref_x.append(all_x[i][[Cr]])
         #----------------------------------------
         
 
